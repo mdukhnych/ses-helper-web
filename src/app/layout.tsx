@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import { Roboto } from "next/font/google"
 import "./globals.css"
+import StoreProvider from "@/providers/StoreProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -18,9 +20,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="uk">
+    <html lang="uk" suppressHydrationWarning >
       <body className={`${roboto.className}`}>
-        {children}
+        <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
+          <StoreProvider>
+            {children}
+          </StoreProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
