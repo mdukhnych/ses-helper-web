@@ -3,6 +3,7 @@ import { Roboto } from "next/font/google"
 import "./globals.css"
 import StoreProvider from "@/providers/StoreProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import AuthProvider from "@/providers/AuthProvider";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -24,7 +25,9 @@ export default function RootLayout({
       <body className={`${roboto.className}`}>
         <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
           <StoreProvider>
-            {children}
+            <AuthProvider>
+              {children}
+            </AuthProvider>
           </StoreProvider>
         </ThemeProvider>
       </body>
