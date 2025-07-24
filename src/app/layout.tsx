@@ -23,7 +23,12 @@ export default function RootLayout({
   return (
     <html lang="uk" suppressHydrationWarning >
       <body className={`${roboto.className}`}>
-        <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
           <StoreProvider>
             <AuthProvider>
               {children}
