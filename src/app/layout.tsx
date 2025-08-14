@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import "./globals.css";
-import { StoreProvider } from "@/providers/storeProvider";
+import { StoreProvider } from "@/providers/StoreProvider";
 import { ThemeProvider } from "next-themes";
+import AuthProvider from "@/providers/AuthProvider";
 
 const roboto = Roboto({
-  variable: "--font-robotro",
+  variable: "--font-roboto",
   subsets: ["cyrillic", "latin"],
 });
 
@@ -22,16 +23,18 @@ export default function RootLayout({
   return (
     <html lang="uk" suppressHydrationWarning>
       <body className={`${roboto.className}}`}>
-        <StoreProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem={true}
-            disableTransitionOnChange={true}
-          >
-            {children}
-          </ThemeProvider>
-        </StoreProvider>
+          <StoreProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem={true}
+              disableTransitionOnChange={true}
+            >
+              <AuthProvider>
+                {children}
+              </AuthProvider>
+            </ThemeProvider>
+          </StoreProvider>
       </body>
     </html>
   );
