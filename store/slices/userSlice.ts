@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
-interface IUserStore {
+export interface IUserStore {
   id: string | null;
   firstName: string;
   lastName: string;
@@ -27,11 +27,10 @@ export const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: { 
-    setUserStore: (_, action: PayloadAction<IUserStore>) => {
-      return action.payload;
-    }
+    setUserStore: (state, action: PayloadAction<IUserStore>) => action.payload,
+    resetUserStore: () => initialState
   }
 });
 
-export const { setUserStore } = userSlice.actions;
+export const { setUserStore, resetUserStore } = userSlice.actions;
 export default userSlice.reducer;
