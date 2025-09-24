@@ -1,10 +1,12 @@
 'use client'
 
 import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from '@/firebaseConfug';
-import { IUserStore, setUserStore } from '@/store/slices/userSlice';
+import { setDataStore } from '@/store/slices/dataSlice';
+import { setUserStore } from '@/store/slices/userSlice';
 import { AppDispatch } from '@/store/store';
+import { IUser } from '@/types/user';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from "firebase/firestore";
+import {  collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -23,9 +25,13 @@ export default function AuthProvider({ children }: {children: React.ReactNode}) 
           const docSnap = await getDoc(docRef);
 
           if (docSnap.exists()) {
-            const userData = docSnap.data() as IUserStore;
+            const userData = docSnap.data() as IUser;
 
-            dispatch(setUserStore(userData))
+            const querySnapshot = await getDocs(collection(FIREBASE_FIRESTORE, "data"));
+            const data = querySnapshot.docs.map(item => item.data());
+
+            dispatch(setUserStore(userData));
+            dispatch(setDataStore(data));
           } else {
             toast('Дані користувача не знайдено', {position: "top-center"});
           }
@@ -35,7 +41,7 @@ export default function AuthProvider({ children }: {children: React.ReactNode}) 
           console.log(error);
         }
       } else {
-        router.replace('/login')
+        router.replace('/login');
       }
 
       setIsLoading(false);

@@ -1,18 +1,8 @@
+import { IUser } from '@/types/user';
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
-export interface IUserStore {
-  id: string | null;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  address: string;
-  dateOfBirth: string;
-  shop: string;
-  role: "admin" |"director" | "seller";
-}
-
-const initialState: IUserStore = {
+const initialState: IUser = {
   id: null,
   firstName: "",
   lastName: "",
@@ -27,7 +17,7 @@ export const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: { 
-    setUserStore: (state, action: PayloadAction<IUserStore>) => action.payload,
+    setUserStore: (state, action: PayloadAction<IUser>) => action.payload,
     resetUserStore: () => initialState
   }
 });
