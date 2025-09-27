@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useAppSelector } from "@/store/hooks"
 import Link from "next/link"
+import { ThemeSwitcher } from "./ui/theme-switcher"
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -57,18 +58,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar {...props}>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a href="#">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <GalleryVerticalEnd className="size-4" />
-                </div>
-                <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">SES-helper</span>
-                  <span className="">v1.0.0</span>
-                </div>
-              </a>
-            </SidebarMenuButton>
+          <SidebarMenuItem className="flex items-center justify-between p-2">
+            <div className="flex gap-2 items-center">
+              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                <GalleryVerticalEnd className="size-4" />
+              </div>
+              <div className="flex flex-col gap-0.5 leading-none">
+                <span className="font-medium">SES-helper</span>
+                <span className="">v1.0.0</span>
+              </div>
+            </div>
+            <ThemeSwitcher />
           </SidebarMenuItem>
         </SidebarMenu>
         <SearchForm value={searchQuery} onChange={setSearchQuery} />
