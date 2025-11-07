@@ -1,28 +1,57 @@
-import { DataArray } from "@/types/data";
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { ICollections, IMenuItem } from "@/types/data";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 interface IDataStore {
-  data: DataArray;
+  menu: IMenuItem[],
+  collections: ICollections,
   loading: boolean;
-  loadingStatus: "idle" | "loading" | "succeeded" | "failed"
+  error: string | null
 }
 
 const initialState: IDataStore = {
-  data: [],
+  menu: [],
+  collections: {
+    services: [],
+    information: [],
+  },
   loading: false,
-  loadingStatus: "idle"
+  error: null
 }
 
-const dataSlice = createSlice({
+export const fetchData = createAsyncThunk(
+  "data/fetchData",
+  async () => {
+    const res = await fetch(`/api/getData`);
+    if (!res.ok) throw new Error("Помилка завантаження даних!");
+    return await res.json();
+  }
+)
+
+export const dataSlice = createSlice({
   name: 'data',
   initialState,
   reducers: {
-    setDataStore: (state, action: PayloadAction<DataArray>) => {
-      state.data = action.payload;
+    setDataStore: (state, action) => {
+      state.collections = action.payload.collections;
     },
-    resetDataStore: () => initialState,
+    resestDataStore: () => initialState,
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchData.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchData.fulfilled, (state, action) => {
+        state.loading = false;
+        state.menu = action.payload.menu;
+        state.collections = action.payload.collections;
+      })
+      .addCase(fetchData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message ?? "Помилка завантаження даних!";
+      })
   }
 });
 
-export const { setDataStore, resetDataStore } = dataSlice.actions;
+export const { setDataStore, resestDataStore } = dataSlice.actions;
 export default dataSlice.reducer;

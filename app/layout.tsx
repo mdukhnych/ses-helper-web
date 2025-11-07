@@ -4,7 +4,6 @@ import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { StoreProvider } from "@/providers/StoreProvider";
 import { Toaster } from "@/components/ui/sonner";
-import AuthProvider from "@/providers/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="uk" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-y-scroll`}
       >
         <StoreProvider>
           <ThemeProvider
@@ -38,10 +37,8 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <AuthProvider>
               <main>{children}</main>
               <Toaster />
-            </AuthProvider>
           </ThemeProvider>
         </StoreProvider>
       </body>

@@ -1,15 +1,16 @@
 import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from "@/firebaseConfug";
-import { IUserStore, resetUserStore, setUserStore } from "@/store/slices/userSlice";
-import { AppDispatch } from "@/store/store";
+import { useAppDispatch } from "@/store/hooks";
+import { fetchData, resestDataStore } from "@/store/slices/dataSlice";
+import { resetUserStore, setUserStore } from "@/store/slices/userSlice";
+import { IUser } from "@/types/user";
 import { FirebaseError } from "firebase/app";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux"
 import { toast } from "sonner";
 
 export default function useAuth() {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch =useAppDispatch();
   const router = useRouter();
 
   const login = async (email: string, password: string) => {
@@ -19,8 +20,9 @@ export default function useAuth() {
     })
     .then((docSnap) => {
       if (docSnap.exists()) {
-        const userData = docSnap.data() as IUserStore;
+        const userData = docSnap.data() as IUser;
         dispatch(setUserStore(userData));  
+        dispatch(fetchData())
         router.replace('/');
         toast.success("Авторизація успішна");
       } else {
@@ -51,6 +53,7 @@ export default function useAuth() {
     try {
       await signOut(FIREBASE_AUTH);
       dispatch(resetUserStore());
+      dispatch(resestDataStore());
       router.replace('/login');
       toast.success("Ви успішно вийшли з акаунта");
     } catch (error) {

@@ -4,52 +4,54 @@ import React from 'react';
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { usePathname } from 'next/navigation';
 import { useAppSelector } from '@/store/hooks';
+import { ICollections } from '@/types/data';
 
 export default function DynamicBreadcrumb() {
   const pathname = usePathname();
-  const data = useAppSelector(state => state.data.data);
-  let parentEl: string | null = null;
-  let itemEl: string | null = null;
 
-  for (const group of data) {
-    if (group.data) {
-      for (const item of group.data) {
-        if (`/${item.id}` === pathname) {
-          parentEl = group.title;
-          itemEl = item.title;
-        }
-      }
+  const { menu, collections } = useAppSelector(state => state.data);
+
+  const segments = pathname.split('/').filter(Boolean);
+
+  const items = segments.map((segment, idx) => {
+    if (idx === 0) {
+      const menuItem = menu.find(m => m.id === segment);
+      return {
+        title: menuItem?.title ?? segment,
+        href: `/${segment}`,
+      };
     }
-  }
 
-  if (!parentEl && !itemEl) return null;
+    const parent = segments[0] as keyof ICollections;
+    const col = collections[parent]?.find(c => c.id === segment);
+    return {
+      title: col?.title ?? segment,
+      href: `/${segments.slice(0, idx + 1).join('/')}`
+    };
+  });
 
   return (
     <Breadcrumb>
       <BreadcrumbList>
-        <BreadcrumbItem className="hidden md:block">
-          <BreadcrumbLink href="#">
-            {
-              parentEl
-            }
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator className="hidden md:block" />
-        <BreadcrumbItem>
-          <BreadcrumbPage>
-            {
-              itemEl
-            }
-          </BreadcrumbPage>
-        </BreadcrumbItem>
+        {items.map((item, idx) => (
+          <React.Fragment key={idx}>
+            <BreadcrumbItem>
+              {idx === items.length - 1 ? (
+                <BreadcrumbPage>{item.title}</BreadcrumbPage>
+              ) : (
+                <BreadcrumbPage>{item.title}</BreadcrumbPage>
+              )}
+            </BreadcrumbItem>
+            {idx !== items.length - 1 && <BreadcrumbSeparator />}
+          </React.Fragment>
+        ))}
       </BreadcrumbList>
     </Breadcrumb>
-  )
+  );
 }

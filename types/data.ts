@@ -1,50 +1,54 @@
-interface IInstructionItem {
-  link: string;
+export interface IMenuItem {
+  id: keyof ICollections;
   title: string;
+  icon?: string;
+  order?: number;
+}
+
+export interface ICollectionItem {
   id: string;
-}
-
-interface IServiceItem {
-  id: number;
   title: string;
-  description: string;
-  price: number;
+  order?: number;
 }
 
-interface IEasyProPrice {
-  id: number;
+interface IEasyProPricelistItem {
   model: string;
   easypro: number;
   easypro2: number;
   easypro3: number;
 }
+interface IEasyProDescrItem {
+  title: string;
+  text: string;
+}
 
+interface IServicesDataItem {
+  id: string;
+  title: string;
+  price: number;
+  description: string;
+} 
 interface IEasyProData {
-  pricelist: IEasyProPrice[];
+  pricelist: IEasyProPricelistItem[];
   description: {
-    easypro: string;
-    easypro2: string;
-    easypro3: string;
+    easypro: IEasyProDescrItem;
+    easypro2: IEasyProDescrItem;
+    easypro3: IEasyProDescrItem;
   };
 }
 
-interface ILinkItem {
-  link: string;
-  title: string;
-  id: string;
+interface IPhoneSettnigsData {
+  free: IServicesDataItem;
+  mix: IServicesDataItem;
+  mixplus: IServicesDataItem;
 }
 
-// групи в межах "Сервіси SES"
-type ServiceGroup =
-  | { title: string; data: IServiceItem[]; id: string; }
-  | { title: string; data: IEasyProData; id: string; }
-  | ILinkItem;
 
-// блок верхнього рівня
-interface IDataBlock {
-  title: string;
-  data: IInstructionItem[] | ServiceGroup[];
-  order: number;
+interface IServicesItem extends ICollectionItem {
+  data: IServicesDataItem[] | IEasyProData | IPhoneSettnigsData;
 }
 
-export type DataArray = IDataBlock[];
+export interface ICollections {
+  services: IServicesItem[];
+  information: [];
+}

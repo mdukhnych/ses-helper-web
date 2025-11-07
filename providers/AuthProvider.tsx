@@ -1,20 +1,19 @@
 'use client'
 
 import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from '@/firebaseConfug';
-import { setDataStore } from '@/store/slices/dataSlice';
+import { useAppDispatch } from '@/store/hooks';
+import { fetchData } from '@/store/slices/dataSlice';
 import { setUserStore } from '@/store/slices/userSlice';
-import { AppDispatch } from '@/store/store';
 import { IUser } from '@/types/user';
 import { onAuthStateChanged } from 'firebase/auth';
-import {  collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { toast } from 'sonner';
 
 export default function AuthProvider({ children }: {children: React.ReactNode}) {
   const [isLoading, setIsLoading] = useState(true);
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
   const router = useRouter();
 
   useEffect(() => {
@@ -23,15 +22,11 @@ export default function AuthProvider({ children }: {children: React.ReactNode}) 
         try {
           const docRef = doc(FIREBASE_FIRESTORE, "users", user.uid);
           const docSnap = await getDoc(docRef);
-
           if (docSnap.exists()) {
             const userData = docSnap.data() as IUser;
-
-            const querySnapshot = await getDocs(collection(FIREBASE_FIRESTORE, "data"));
-            const data = querySnapshot.docs.map(item => item.data());
-
             dispatch(setUserStore(userData));
-            dispatch(setDataStore(data));
+            dispatch(fetchData());
+            setIsLoading(false);
           } else {
             toast('Дані користувача не знайдено', {position: "top-center"});
           }
@@ -44,7 +39,6 @@ export default function AuthProvider({ children }: {children: React.ReactNode}) 
         router.replace('/login');
       }
 
-      setIsLoading(false);
     });
 
     return () => unsubscribe();

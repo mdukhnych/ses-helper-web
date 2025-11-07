@@ -10,6 +10,7 @@ const initialState: IUser = {
   address: "",
   dateOfBirth: "",
   shop: "",
+  orders: [],
   role: "admin"
 }
 
@@ -17,7 +18,7 @@ export const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: { 
-    setUserStore: (state, action: PayloadAction<IUser>) => action.payload,
+    setUserStore: (_, action: PayloadAction<IUser>) => action.payload,
     resetUserStore: () => initialState
   }
 });

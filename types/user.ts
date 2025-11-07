@@ -1,3 +1,14 @@
+interface IOrder {
+  id: number;
+  goods: string[];
+  clientName: string;
+  clientPhoneNumber: string;
+  clientAddress: string;
+  status: "new" | "inProgerss" | "done" | "canceled";
+  createdAt: Date;
+  editedAt: Date;
+}
+
 export interface IUser {
   id: string | null;
   firstName: string;
@@ -6,5 +17,6 @@ export interface IUser {
   address: string;
   dateOfBirth: string;
   shop: string;
+  orders: IOrder[];
   role: "admin" |"director" | "seller";
 }

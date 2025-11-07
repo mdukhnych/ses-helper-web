@@ -1,17 +1,16 @@
 'use client'
 
-import * as React from "react"
-import { GalleryVerticalEnd, Minus, Plus } from "lucide-react"
+import { GalleryVerticalEnd, LogOut, Minus, Plus } from "lucide-react";
 
-import { SearchForm } from "@/components/search-form"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+} from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarMenu,
@@ -21,42 +20,39 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import { useAppSelector } from "@/store/hooks"
-import Link from "next/link"
-import { ThemeSwitcher } from "./ui/theme-switcher"
-
+} from "@/components/ui/sidebar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import Link from "next/link";
+import { ThemeSwitcher } from "./ui/theme-switcher";
+import { Button } from "./ui/button";
+import useAuth from "@/hooks/useAuth";
+import { useAppSelector } from "@/store/hooks";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [openItem, setOpenItem] = React.useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const { logout } = useAuth();
 
-  const data = useAppSelector(state => state.data.data);
+  const data = useAppSelector(state => state.data);
 
-  const sortedData = [...data].sort((a, b) => {
-    if (a.order === undefined && b.order === undefined) return 0; 
-    if (a.order === undefined) return 1; 
-    if (b.order === undefined) return -1; 
-    return a.order - b.order;
+  const sortByOrder = <T extends { order?: number }>(arr: T[]) =>
+    [...arr].sort((a, b) => {
+      if (a.order === undefined && b.order === undefined) return 0;
+      if (a.order === undefined) return 1;
+      if (b.order === undefined) return -1;
+      return a.order - b.order;
   });
-
-  const filteredData = sortedData
-    .map(group => {
-      const filteredSubItems = group.data?.filter(sub =>
-        sub.title.toLowerCase().includes(searchQuery.toLowerCase())
-      ) || []
-
-      if (group.title.toLowerCase().includes(searchQuery.toLowerCase()) || filteredSubItems.length) {
-        return { ...group, data: filteredSubItems }
-      }
-
-      return null
-    })
-    .filter(Boolean) as typeof sortedData
 
   return (
     <Sidebar {...props}>
-      <SidebarHeader>
+      <SidebarHeader >
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center justify-between p-2">
             <div className="flex gap-2 items-center">
@@ -68,54 +64,67 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <span className="">v1.0.0</span>
               </div>
             </div>
-            <ThemeSwitcher />
           </SidebarMenuItem>
         </SidebarMenu>
-        <SearchForm value={searchQuery} onChange={setSearchQuery} />
       </SidebarHeader>
-      <SidebarContent>
+
+      <SidebarContent >
         <SidebarGroup>
           <SidebarMenu>
-            {filteredData.map((item, index) => (
+            {sortByOrder(data.menu).map((item) => (
               <Collapsible
-                key={item.title}
+                key={item.id}
                 className="group/collapsible"
-                onOpenChange={(openItem) => setOpenItem(openItem ? index : null)}
-                open={searchQuery.length > 0 ? true : openItem === index}
               >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton className="cursor-pointer">
-                      {item.title}{" "}
+                      {item.title}
                       <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
                       <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
-                  {item.data?.length ? (
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {
-                          item.data.map((item, index) => (
-                            <SidebarMenuSubItem key={index} className="cursor-pointer">
-                              <SidebarMenuSubButton
-                                asChild
-                                // isActive={item.isActive}
-                              >
-                                <Link href={`/${item.id}`}>{item.title}</Link>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          )
-                        )}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  ) : null}
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {sortByOrder(data.collections[item.id]).map((subItem, idx) => (
+                        <SidebarMenuSubItem key={idx} className="cursor-pointer">
+                          <SidebarMenuSubButton asChild className="overflow-visible h-auto p-1" >
+                            <Link href={`/${item.id}/${subItem.id}`} >{subItem.title}</Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
             ))}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarRail />
+
+      <SidebarFooter className="border-t py-3">
+        <div className="flex items-center justify-end gap-2">
+          <ThemeSwitcher />
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="cursor-pointer">
+                <LogOut />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Ви впевнені що хочете вийти з облікового запису?</AlertDialogTitle>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="cursor-pointer">Ні</AlertDialogCancel>
+                <AlertDialogAction className="cursor-pointer" onClick={logout}>Так</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   )
 }
