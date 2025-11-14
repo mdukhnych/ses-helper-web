@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React, { FormEvent, useState } from 'react';
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -13,92 +13,122 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '../ui/textarea';
+import { IServicesDataItem } from '@/types/data';
+import useFirestore from '@/hooks/useFirestore';
+import { Spinner } from '../ui/spinner';
+import { toast } from 'sonner';
 
 interface IModalProps {
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  data?: [];
-  nextId?: number;
+  data?: IServicesDataItem | null;
+  ids?: string[] | null;
 }
 
 export default function WarrantyModal({
   isOpen,
   setIsOpen,
-  data = [],
-  nextId = 0
+  data = null,
+  ids = null,
 }: IModalProps) {
 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState(
-    data ? ({...data}) : ({
-      id: nextId,
-      title: "",
-      price: 0,
-      description: ""
-    })
-  );
-
-
-  useEffect(() => {
-    if (data) {
-      setFormData(data)
-    } else {
-      setFormData({
-        id: nextId,
+    data ?
+      {
+        ...data
+      } : 
+      {
+        id: "",
         title: "",
         price: 0,
         description: ""
-      })
-    }
-  }, [data, nextId]);
+      }
+  );
 
+  const { modifyWarrantyService } = useFirestore();
 
-  // const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-  //   const { name, value } = e.target;
-  //   if (name === "price") {
-  //     const numericValue = parseFloat(value);
-  //     if (!isNaN(numericValue)) {
-  //       setFormData({ ...formData, price: numericValue / 100 });
-  //     } else {
-  //       setFormData({ ...formData, price: 0 });
-  //     }
-  //   } else {
-  //     setFormData({ ...formData, [name]: value });
-  //   }
-  // };
-
-  const onFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (data) {
-      alert("Edit")
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    if (name === "price") {
+      const numericValue = parseFloat(value);
+      if (!isNaN(numericValue)) {
+        setFormData({ ...formData, price: numericValue / 100 });
+      } else {
+        setFormData({ ...formData, price: 0 });
+      }
     } else {
-      alert("Addedd")
+      setFormData({ ...formData, [name]: value });
     }
-    setIsOpen(false);
+  };
+
+  const checkUniqueId = (id: string, ids: string[]) => {
+    if (id === "") {
+      toast.error("Поле ID не може бути порожнім.", { position: "top-center" });
+      return false;
+    }
+
+    if (ids.includes(id)) {
+      toast.error("Послуга з таким ID вже зареєстрована.", { position: "top-center" });
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  const onFormSubmitHandler = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    if (data) {
+      await modifyWarrantyService("update", formData);
+      setIsOpen(false);
+      setLoading(false);
+    } else {
+      if (checkUniqueId(formData.id, ids ? ids : []))  {
+        await modifyWarrantyService("add", formData);
+        setIsOpen(false);
+      }
+    }
     setLoading(false);
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={onFormSubmit}>
+        <form onSubmit={onFormSubmitHandler}>
           <DialogHeader className='py-4 border-b-1'>
-            <DialogTitle>{data ? "Редагування" : "Додати"}</DialogTitle>
+            <DialogTitle>{data ? "Редактор" : "Додати"}</DialogTitle>
             <DialogDescription>
-              {data
-                ? `Редагування інформації про послугу ${0}`
-                : "Додайте нову послугу до списку"}
+              {data ? 
+                `Внесіть зміни до послуги ${data.title}`
+                : "Додавання нової послуги"
+              }
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            {
+              !data ? 
+                <div className="grid gap-3">
+                  <Label htmlFor="warrabty-id">Ідентифікатор послуги (ID):</Label>
+                  <Input
+                    id="warrabty-id"
+                    name="id"
+                    placeholder="Введіть ID послуги..."
+                    value={formData.id}
+                    onChange={handleChange}
+                  />
+                </div>
+              : null
+            }
             <div className="grid gap-3">
               <Label htmlFor="warrabty-title">Назва послуги:</Label>
               <Input
                 id="warrabty-title"
                 name="title"
                 placeholder="Введіть назву послуги..."
-                // value={formData.title}
-                // onChange={handleChange}
+                value={formData.title}
+                onChange={handleChange}
               />
             </div>
             <div className="grid gap-3">
@@ -107,8 +137,8 @@ export default function WarrantyModal({
                 id="warranty-price"
                 name="price"
                 placeholder="Введіть ціну у відсотках..."
-                // value={(formData.price * 100).toFixed(0)}
-                // onChange={handleChange}
+                value={(formData.price * 100).toFixed(0)}
+                onChange={handleChange}
               />
             </div>
             <div className="grid gap-3">
@@ -118,8 +148,8 @@ export default function WarrantyModal({
                 id="warranty-description"
                 name="description"
                 placeholder="Введіть опис послуги..."
-                // value={formData.description}
-                // onChange={handleChange}
+                value={formData.description}
+                onChange={handleChange}
               />
               <p className="text-muted-foreground text-sm">
                 {"Використовуйте тег <br> для перенесення рядка."}
@@ -136,12 +166,17 @@ export default function WarrantyModal({
             >
               Відміна
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={loading}
-              className='cursor-pointer'
+              className="cursor-pointer relative flex items-center justify-center"
             >
-              {loading ? "Збереження..." : "Зберегти"}
+              <span className={loading ? "opacity-0" : "opacity-100"}>Зберегти</span>
+              {loading && (
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <Spinner />
+                </span>
+              )}
             </Button>
           </DialogFooter>
         </form>

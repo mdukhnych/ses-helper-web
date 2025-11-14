@@ -22,7 +22,7 @@ interface IEasyProDescrItem {
   text: string;
 }
 
-interface IServicesDataItem {
+export interface IServicesDataItem {
   id: string;
   title: string;
   price: number;

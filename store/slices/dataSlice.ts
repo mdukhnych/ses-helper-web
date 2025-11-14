@@ -1,5 +1,5 @@
-import { ICollections, IMenuItem } from "@/types/data";
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { ICollections, IMenuItem, IServicesDataItem } from "@/types/data";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface IDataStore {
   menu: IMenuItem[],
@@ -34,6 +34,11 @@ export const dataSlice = createSlice({
     setDataStore: (state, action) => {
       state.collections = action.payload.collections;
     },
+    setWarrantyDataStore: (state, action: PayloadAction<IServicesDataItem[]>) => {
+      const service = state.collections.services.find(item => item.id === "warranty-protection");
+      if (!service) return;
+      service.data = action.payload;
+    },
     resestDataStore: () => initialState,
   },
   extraReducers: (builder) => {
@@ -53,5 +58,5 @@ export const dataSlice = createSlice({
   }
 });
 
-export const { setDataStore, resestDataStore } = dataSlice.actions;
+export const { setDataStore, resestDataStore, setWarrantyDataStore } = dataSlice.actions;
 export default dataSlice.reducer;
