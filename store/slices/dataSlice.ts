@@ -1,4 +1,4 @@
-import { ICollections, IMenuItem, IServicesDataItem } from "@/types/data";
+import { ICollections, IEasyProData, IEasyProPricelistItem, IMenuItem, IServicesDataItem } from "@/types/data";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface IDataStore {
@@ -39,6 +39,11 @@ export const dataSlice = createSlice({
       if (!service) return;
       service.data = action.payload;
     },
+    setEasyproPricelist: (state, action) => {
+      const easypro = state.collections.services.find(item => item.id === "easypro")?.data as IEasyProData;
+      if (!easypro) return;
+      easypro.pricelist = action.payload;
+    },
     resestDataStore: () => initialState,
   },
   extraReducers: (builder) => {
@@ -58,5 +63,5 @@ export const dataSlice = createSlice({
   }
 });
 
-export const { setDataStore, resestDataStore, setWarrantyDataStore } = dataSlice.actions;
+export const { setDataStore, resestDataStore, setWarrantyDataStore, setEasyproPricelist } = dataSlice.actions;
 export default dataSlice.reducer;

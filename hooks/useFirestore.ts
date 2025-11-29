@@ -1,7 +1,7 @@
 import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setWarrantyDataStore } from "@/store/slices/dataSlice";
-import { IServicesDataItem } from "@/types/data";
+import { setEasyproPricelist, setWarrantyDataStore } from "@/store/slices/dataSlice";
+import { IEasyProPricelistItem, IServicesDataItem } from "@/types/data";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { toast } from "sonner";
 
@@ -10,11 +10,11 @@ type ActionType = "add" | "update" | "delete";
 export default function useFirestore() {
   const dispatch = useAppDispatch();
   const store = useAppSelector(state =>
-    state.data.collections.services.find(item => item.id === "warranty-protection")
+    state.data.collections.services
   );
 
   const modifyWarrantyService = async (action: ActionType, item: IServicesDataItem) => {
-    if (!store) {
+    if (!store.find(item => item.id === "warranty-protection")) {
       toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });
       return;
     }
@@ -61,5 +61,31 @@ export default function useFirestore() {
     }
   };
 
-  return { modifyWarrantyService };
+  const updateEasyproPricelist = async (newPricelist: IEasyProPricelistItem[], setLoading: React.Dispatch<React.SetStateAction<boolean>>) => {
+    setLoading(true);
+    if (!store.find(item => item.id === "easypro")) {
+      toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });
+      return;
+    }
+
+    try {
+      const ref = doc(FIREBASE_FIRESTORE, "services", "easy-pro");
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        toast.error("Документ не знайдено!", { position: "top-center" });
+        return;
+      }
+
+      await updateDoc(ref, { "data.pricelist": newPricelist });
+      dispatch(setEasyproPricelist);
+
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return { modifyWarrantyService, updateEasyproPricelist };
 }

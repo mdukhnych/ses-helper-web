@@ -1,5 +1,6 @@
 'use client'
 
+import { Spinner } from '@/components/ui/spinner';
 import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from '@/firebaseConfug';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchData } from '@/store/slices/dataSlice';
@@ -44,7 +45,7 @@ export default function AuthProvider({ children }: {children: React.ReactNode}) 
     return () => unsubscribe();
   }, [dispatch, router]);
 
-  if (isLoading) return <p>Loading...</p>
+  if (isLoading) return <div className="flex w-full h-[100vh] items-center justify-center"><Spinner className='size-20'/></div>
 
   return (
     <div>{ children }</div>

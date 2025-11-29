@@ -11,7 +11,7 @@ export interface ICollectionItem {
   order?: number;
 }
 
-interface IEasyProPricelistItem {
+export interface IEasyProPricelistItem {
   model: string;
   easypro: number;
   easypro2: number;
@@ -28,7 +28,10 @@ export interface IServicesDataItem {
   price: number;
   description: string;
 } 
-interface IEasyProData {
+
+export type EasyProDescrKeys = "easypro" | "easypro2" | "easypro3";
+
+export interface IEasyProData {
   pricelist: IEasyProPricelistItem[];
   description: {
     easypro: IEasyProDescrItem;
