@@ -9,8 +9,7 @@ const initialState: IUser = {
   phoneNumber: "",
   address: "",
   dateOfBirth: "",
-  shop: "",
-  orders: [],
+  shopId: "",
   role: "admin"
 }
 

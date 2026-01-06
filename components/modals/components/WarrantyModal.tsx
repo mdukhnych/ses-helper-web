@@ -3,8 +3,6 @@
 import React, { FormEvent, useState } from 'react';
 import { Button } from "@/components/ui/button"
 import {
-  Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -12,26 +10,19 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from '../ui/textarea';
-import { IServicesDataItem } from '@/types/data';
+import { Textarea } from '@/components/ui/textarea';
 import useFirestore from '@/hooks/useFirestore';
-import { Spinner } from '../ui/spinner';
 import { toast } from 'sonner';
+import { WarrantyDataItem } from '@/types/services';
+import { Spinner } from '@/components/ui/spinner';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { closeModal } from '@/store/slices/modalSlice';
 
-interface IModalProps {
-  isOpen: boolean;
-  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  data?: IServicesDataItem | null;
-  ids?: string[] | null;
-}
 
-export default function WarrantyModal({
-  isOpen,
-  setIsOpen,
-  data = null,
-  ids = null,
-}: IModalProps) {
-
+export default function WarrantyModal() {
+  const data = useAppSelector(state => state.modal.payload) as WarrantyDataItem | null;
+  const warrantyItems = useAppSelector(state => state.services.data.find(item => item.id === "warranty-protection"))?.data as WarrantyDataItem[];
+  
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState(
     data ?
@@ -46,7 +37,12 @@ export default function WarrantyModal({
       }
   );
 
+  const dispatch = useAppDispatch();
+
+  const ids = warrantyItems.map(item => item.id);
+  
   const { modifyWarrantyService } = useFirestore();
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -82,22 +78,20 @@ export default function WarrantyModal({
 
     if (data) {
       await modifyWarrantyService("update", formData);
-      setIsOpen(false);
+      dispatch(closeModal());
       setLoading(false);
     } else {
       if (checkUniqueId(formData.id, ids ? ids : []))  {
         await modifyWarrantyService("add", formData);
-        setIsOpen(false);
+        dispatch(closeModal())
       }
     }
     setLoading(false);
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={onFormSubmitHandler}>
-          <DialogHeader className='py-4 border-b-1'>
+    <form onSubmit={onFormSubmitHandler}>
+          <DialogHeader className='py-4 border-b'>
             <DialogTitle>{data ? "Редактор" : "Додати"}</DialogTitle>
             <DialogDescription>
               {data ? 
@@ -156,11 +150,11 @@ export default function WarrantyModal({
               </p>
             </div>
           </div>
-          <DialogFooter className='pt-4 border-t-1'>
+          <DialogFooter className='pt-4 border-t'>
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsOpen(false)}
+              onClick={() => dispatch(closeModal())}
               disabled={loading}
               className='cursor-pointer'
             >
@@ -180,7 +174,5 @@ export default function WarrantyModal({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
   )
 }

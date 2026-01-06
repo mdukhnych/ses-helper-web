@@ -1,6 +1,7 @@
 import React from 'react'
 import WarrantyProtection from './(components)/WarrantyProtection';
 import EasyPro from './(components)/EasyPro';
+import PhoneServices from './(components)/PhoneServices';
 
 export default async function MainPage({
   params,
@@ -10,7 +11,8 @@ export default async function MainPage({
   const { pageId } = await params;
 
   if (pageId === "warranty-protection") return <WarrantyProtection />;
-  if (pageId === "easypro") return <EasyPro />
+  if (pageId === "easy-pro") return <EasyPro />
+  if (pageId === "phone-services") return <PhoneServices />
 
   return pageId
   

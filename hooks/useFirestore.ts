@@ -1,7 +1,7 @@
 import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setEasyproPricelist, setWarrantyDataStore } from "@/store/slices/dataSlice";
-import { IEasyProPricelistItem, IServicesDataItem } from "@/types/data";
+import { setEasyproPricelist, setWarrantyDataStore } from "@/store/slices/servicesSlice";
+import { EasyProPricelistItem, WarrantyDataItem } from "@/types/services";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { toast } from "sonner";
 
@@ -10,10 +10,10 @@ type ActionType = "add" | "update" | "delete";
 export default function useFirestore() {
   const dispatch = useAppDispatch();
   const store = useAppSelector(state =>
-    state.data.collections.services
+    state.services.data
   );
 
-  const modifyWarrantyService = async (action: ActionType, item: IServicesDataItem) => {
+  const modifyWarrantyService = async (action: ActionType, item: WarrantyDataItem) => {
     if (!store.find(item => item.id === "warranty-protection")) {
       toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });
       return;
@@ -28,8 +28,8 @@ export default function useFirestore() {
         return;
       }
 
-      const warrantyData = (snap.data()?.data || []) as IServicesDataItem[];
-      let updatedData: IServicesDataItem[] = [];
+      const warrantyData = (snap.data()?.data || []) as WarrantyDataItem[];
+      let updatedData: WarrantyDataItem[] = [];
 
       switch (action) {
         case "add":
@@ -61,7 +61,7 @@ export default function useFirestore() {
     }
   };
 
-  const updateEasyproPricelist = async (newPricelist: IEasyProPricelistItem[], setLoading: React.Dispatch<React.SetStateAction<boolean>>) => {
+  const updateEasyproPricelist = async (newPricelist: EasyProPricelistItem[], setLoading: React.Dispatch<React.SetStateAction<boolean>>) => {
     setLoading(true);
     if (!store.find(item => item.id === "easypro")) {
       toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });

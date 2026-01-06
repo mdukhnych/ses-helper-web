@@ -1,6 +1,6 @@
 import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from "@/firebaseConfug";
 import { useAppDispatch } from "@/store/hooks";
-import { fetchData, resestDataStore } from "@/store/slices/dataSlice";
+import { fetchServices, resestServicesStore } from "@/store/slices/servicesSlice";
 import { resetUserStore, setUserStore } from "@/store/slices/userSlice";
 import { IUser } from "@/types/user";
 import { FirebaseError } from "firebase/app";
@@ -22,7 +22,7 @@ export default function useAuth() {
       if (docSnap.exists()) {
         const userData = docSnap.data() as IUser;
         dispatch(setUserStore(userData));  
-        dispatch(fetchData())
+        dispatch(fetchServices());
         router.replace('/');
         toast.success("Авторизація успішна");
       } else {
@@ -53,7 +53,7 @@ export default function useAuth() {
     try {
       await signOut(FIREBASE_AUTH);
       dispatch(resetUserStore());
-      dispatch(resestDataStore());
+      dispatch(resestServicesStore());
       router.replace('/login');
       toast.success("Ви успішно вийшли з акаунта");
     } catch (error) {

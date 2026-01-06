@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { useAppSelector } from '@/store/hooks'
-import { EasyProDescrKeys, IEasyProData, IEasyProPricelistItem } from '@/types/data';
 import { ListRestart } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
@@ -25,6 +24,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import useFirestore from '@/hooks/useFirestore';
+import { formatPrice } from '@/utils';
+import { EasyProData, EasyProDescription, EasyProPricelistItem } from '@/types/services';
 
 export default function EasyPro() {
   const [search, setSearch] = useState("");
@@ -35,7 +36,7 @@ export default function EasyPro() {
 
   const role = useAppSelector(state => state.user.role)
 
-  const data = useAppSelector(state => state.data.collections.services.find(item => item.id === "easypro"))?.data as IEasyProData;
+  const data = useAppSelector(state => state.services.data.find(item => item.id === "easy-pro"))?.data as EasyProData;
   if (!data) return <div className="w-full h-full flex items-center justify-center"><Spinner className='size-20' /></div>
 
   const filteredList = data.pricelist.filter(item =>
@@ -54,7 +55,7 @@ export default function EasyPro() {
       const wb = XLSX.read(bstr, { type: "binary" });
       const wsname = wb.SheetNames[0];
       const ws = wb.Sheets[wsname];
-      const jsonData = XLSX.utils.sheet_to_json(ws, { defval: "" }) as IEasyProPricelistItem[]; // дефолтні пусті клітинки
+      const jsonData = XLSX.utils.sheet_to_json(ws, { defval: "" }) as EasyProPricelistItem[];
 
       updateEasyproPricelist(jsonData, setLoading);
       e.target.value = "";  
@@ -116,9 +117,9 @@ export default function EasyPro() {
                         filteredList.map((item, i) => (
                           <TableRow key={i}>
                             <TableCell className="font-medium">{item.model}</TableCell>
-                            <TableCell>{item.easypro && item.easypro.toFixed(2)}</TableCell>
-                            <TableCell>{item.easypro2 && item.easypro2.toFixed(2)}</TableCell>
-                            <TableCell>{item.easypro3 && item.easypro3.toFixed(2)}</TableCell>
+                            <TableCell>{item.easypro && formatPrice(item.easypro)}</TableCell>
+                            <TableCell>{item.easypro2 && formatPrice(item.easypro2)}</TableCell>
+                            <TableCell>{item.easypro3 && formatPrice(item.easypro3)}</TableCell>
                           </TableRow>
                         ))
                       }
@@ -133,12 +134,12 @@ export default function EasyPro() {
               <Accordion type="single" collapsible>
                 {
                   Object.keys(data.description).sort().map((item, i) => {
-                    const key = item as EasyProDescrKeys;
+                    const key = item as keyof EasyProDescription;
                     return (
-                      <Card key={key} className='p-0 my-2'>
+                      <Card key={item} className='p-0 my-2'>
                         <AccordionItem value={`item-${i}`}>
                           <AccordionTrigger className='p-4 cursor-pointer'>{data.description[key].title}</AccordionTrigger>
-                          <AccordionContent className='py-4 border-t-1 p-4 whitespace-pre-line'>
+                          <AccordionContent className='py-4 border-t p-4 whitespace-pre-line'>
                             { data.description[key].text.replace(/<br\s*\/?>/g, '\n') }
                           </AccordionContent>
                         </AccordionItem>
@@ -153,4 +154,3 @@ export default function EasyPro() {
     </div>
   )
 }
-

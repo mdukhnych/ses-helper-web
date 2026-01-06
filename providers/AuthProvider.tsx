@@ -3,7 +3,8 @@
 import { Spinner } from '@/components/ui/spinner';
 import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from '@/firebaseConfug';
 import { useAppDispatch } from '@/store/hooks';
-import { fetchData } from '@/store/slices/dataSlice';
+import { fetchBreadcrumbs } from '@/store/slices/breadcrumbsSlice';
+import { fetchServices } from '@/store/slices/servicesSlice';
 import { setUserStore } from '@/store/slices/userSlice';
 import { IUser } from '@/types/user';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -26,7 +27,8 @@ export default function AuthProvider({ children }: {children: React.ReactNode}) 
           if (docSnap.exists()) {
             const userData = docSnap.data() as IUser;
             dispatch(setUserStore(userData));
-            dispatch(fetchData());
+            dispatch(fetchBreadcrumbs());
+            dispatch(fetchServices());
             setIsLoading(false);
           } else {
             toast('Дані користувача не знайдено', {position: "top-center"});
@@ -45,7 +47,7 @@ export default function AuthProvider({ children }: {children: React.ReactNode}) 
     return () => unsubscribe();
   }, [dispatch, router]);
 
-  if (isLoading) return <div className="flex w-full h-[100vh] items-center justify-center"><Spinner className='size-20'/></div>
+  if (isLoading) return <div className="flex w-full h-screen items-center justify-center"><Spinner className='size-20'/></div>
 
   return (
     <div>{ children }</div>
