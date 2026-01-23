@@ -8,7 +8,7 @@ export const MODAL_CONFIG = {
     Component: WarrantyModal,
   },
   'phone-services': {
-    title: 'Послуги смартфонів',
+    title: 'Послуги налаштування смартфонів',
     Component: PhoneServicesModal,
   },
 } as const

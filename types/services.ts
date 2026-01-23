@@ -44,7 +44,7 @@ interface EasyProService extends BaseServiceItem {
 
 
 // Phone Services
-interface PhoneServiceItem extends BaseServiceItem {
+export interface PhoneServiceItem extends BaseServiceItem {
   price: number;
   items: string[];
 }
@@ -54,7 +54,7 @@ export interface PhoneServicesData {
   servicesItems: PhoneServiceItem[];
 }
 
-interface PhoneService extends BaseServiceItem {
+export interface PhoneService extends BaseServiceItem {
   type: 'phone';
   data: PhoneServicesData;
 }
@@ -65,7 +65,7 @@ interface EktaListItem extends BaseServiceItem {
   price: number;
   description: string;
 }
-interface EktaServicesDataItem extends BaseServiceItem {
+export interface EktaServicesDataItem extends BaseServiceItem {
   list: EktaListItem[];
 }
 

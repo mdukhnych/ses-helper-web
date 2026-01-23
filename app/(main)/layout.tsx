@@ -5,26 +5,28 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
 import AuthProvider from '@/providers/AuthProvider'
 import React from 'react'
 
-export default function MainLayout({ children }: {children: React.ReactNode}) {
+export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
       <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <div className="flex items-center justify-between w-full">
-              <DynamicBreadcrumb />
+        <div className="flex h-screen w-full overflow-hidden">
+          <AppSidebar />
+          <SidebarInset className="flex flex-col min-w-0">
+            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator
+                orientation="vertical"
+                className="mr-2 data-[orientation=vertical]:h-4"
+              />
+              <div className="flex items-center justify-between w-full">
+                <DynamicBreadcrumb />
+              </div>
+            </header>
+            <div className="flex flex-1 flex-col gap-4 p-4 overflow-auto min-w-0">
+              {children}
             </div>
-          </header>
-          <div className="flex flex-1 flex-col gap-4 p-4">
-            { children }
-          </div>
-        </SidebarInset>
+          </SidebarInset>
+        </div>
       </SidebarProvider>
     </AuthProvider>
   )

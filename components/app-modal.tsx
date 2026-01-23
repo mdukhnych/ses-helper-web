@@ -17,9 +17,10 @@ export function AppModal({
   onOpenChange,
   children,
 }: AppModalProps) {
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[750px]">
         {children}
       </DialogContent>
     </Dialog>

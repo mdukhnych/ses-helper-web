@@ -1,11 +1,20 @@
 import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setEasyproPricelist, setWarrantyDataStore } from "@/store/slices/servicesSlice";
-import { EasyProPricelistItem, WarrantyDataItem } from "@/types/services";
+import { setEasyproPricelist, setPhoneServicesData, setWarrantyDataStore } from "@/store/slices/servicesSlice";
+import { EasyProPricelistItem, PhoneService, PhoneServiceItem, PhoneServicesData, WarrantyDataItem } from "@/types/services";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { toast } from "sonner";
 
-type ActionType = "add" | "update" | "delete";
+type WarrantyActionType = "add" | "update" | "delete";
+type PhoneServicesActionType = 
+  | {
+    action: "goods";
+    items: string[];
+  }
+  | {
+    action: "services";
+    items: PhoneServiceItem[];
+  };
 
 export default function useFirestore() {
   const dispatch = useAppDispatch();
@@ -13,7 +22,7 @@ export default function useFirestore() {
     state.services.data
   );
 
-  const modifyWarrantyService = async (action: ActionType, item: WarrantyDataItem) => {
+  const modifyWarrantyService = async (action: WarrantyActionType, item: WarrantyDataItem) => {
     if (!store.find(item => item.id === "warranty-protection")) {
       toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });
       return;
@@ -63,7 +72,7 @@ export default function useFirestore() {
 
   const updateEasyproPricelist = async (newPricelist: EasyProPricelistItem[], setLoading: React.Dispatch<React.SetStateAction<boolean>>) => {
     setLoading(true);
-    if (!store.find(item => item.id === "easypro")) {
+    if (!store.find(item => item.id === "easy-pro")) {
       toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });
       return;
     }
@@ -78,7 +87,7 @@ export default function useFirestore() {
       }
 
       await updateDoc(ref, { "data.pricelist": newPricelist });
-      dispatch(setEasyproPricelist);
+      dispatch(setEasyproPricelist(newPricelist));
 
     } catch (error) {
       console.log(error);
@@ -87,5 +96,45 @@ export default function useFirestore() {
     }
   }
 
-  return { modifyWarrantyService, updateEasyproPricelist };
+  const updatePhoneServicesData = async (data: PhoneServicesActionType) => {
+
+    if (!store.find(item => item.id === "phone-services")) {
+      toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });
+      return;
+    }
+
+    try {
+      const ref = doc(FIREBASE_FIRESTORE, "services", "phone-services");
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        toast.error("Документ не знайдено!", { position: "top-center" });
+        return;
+      }
+
+      const phoneServices = snap.data() as PhoneService;
+      let updatedData: PhoneServicesData = phoneServices.data;
+
+      switch (data.action) {
+        case "goods":
+          updatedData = { ...updatedData, goodsAndServices: data.items }
+          break;
+        case "services":
+          updatedData = { ...updatedData, servicesItems: data.items }
+          break;
+        default:
+          toast.error("Невідома дія!", { position: "top-center" });
+          break;
+      }
+      dispatch(setPhoneServicesData(updatedData));
+      updateDoc(ref, {data: updatedData});
+
+    } catch (error) {
+      toast.error("Сталась помилка.");
+      console.error("Error => " + error)
+    }
+
+  }
+
+  return { modifyWarrantyService, updateEasyproPricelist, updatePhoneServicesData };
 }

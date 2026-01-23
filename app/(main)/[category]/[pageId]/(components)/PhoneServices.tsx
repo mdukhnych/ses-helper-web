@@ -23,18 +23,20 @@ import {
 
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
-import { CircleCheckBig, Ellipsis, Minus } from "lucide-react";
+import { CircleCheckBig, Minus } from "lucide-react";
 import { formatPrice } from "@/utils";
-import { PhoneServicesData } from "@/types/services";
+import { PhoneServiceItem, PhoneServicesData } from "@/types/services";
 import { openModal } from "@/store/slices/modalSlice";
+import AlertDialogDemo from "@/components/shared/AlertDialog";
+import useFirestore from "@/hooks/useFirestore";
 
-function AdminActions() {
-
+function AdminActions({data}: {data: PhoneServicesData}) {
   const dispatch = useAppDispatch();
+
   return (
-    <div className="flex gap-4 border-b pb-4">
-      <Button type="button" className="cursor-pointer" onClick={() => {dispatch(openModal({type: "phone-services", payload: null}))}}>Сервіси</Button>
-      <Button type="button" className="cursor-pointer">Послуги / товари</Button>
+    <div className="flex gap-4 pb-4">
+      <Button type="button" className="cursor-pointer" onClick={() => dispatch(openModal({type: "phone-services", payload: {mode: "services", data: null}}))}>Сервіси</Button>
+      <Button type="button" className="cursor-pointer" onClick={() => dispatch(openModal({type: "phone-services", payload: {mode: "goods", data: data.goodsAndServices}}))}>Послуги / товари</Button>
     </div>
   )
 }
@@ -42,6 +44,10 @@ function AdminActions() {
 export default function PhoneServices() {
   const data = useAppSelector(state => state.services.data.find(item => item.id === "phone-services")?.data as PhoneServicesData);
   const role = useAppSelector(state => state.user.role);
+
+  const { updatePhoneServicesData } = useFirestore();
+
+  const dispatch = useAppDispatch();
 
   const servicesWithSet = useMemo(() => {
     if (!data) return []
@@ -60,91 +66,85 @@ export default function PhoneServices() {
     )
   }
 
+  const handleDeleteService = (service: PhoneServiceItem) => {
+    const updatedServices = data.servicesItems.filter(item => item.id !== service.id);
+    updatePhoneServicesData({action: "services", items: updatedServices});
+  }
+
   return (
-    <div>
-      {role === "admin" && <AdminActions />}
+    <div >
+      {role === "admin" && <AdminActions data={data} />}
+      <div className="relative w-full overflow-auto rounded-md">
+        <Table className="table-fixed w-full border">
 
-      <Table>
-        <TableHeader className="bg-muted/50">
-          <TableRow> 
-            <TableHead className="border-l first:border-l-0 flex items-center justify-between py-6">
-              Перелік товарів та робіт
-              {
-                role === "admin" && 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="cursor-pointer"><Ellipsis/></DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem>Додати</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>Видалити всі</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-              }
-            </TableHead>
-
-            {servicesWithSet.map(service => (
-              <TableHead className="text-center" key={service.id}>
-                {
-                  role === "admin" ?
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="cursor-pointer">{service.title}</DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem>Змінити</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>Видалити</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  : <span>{service.title} </span>
-                }
-              </TableHead>
+          <colgroup>
+            <col style={{ minWidth: 400 }} />
+            {data.servicesItems.map(service => (
+              <col
+                key={service.id}
+                style={{ width: 150, minWidth: 150, maxWidth: 150 }}
+              />
             ))}
-          </TableRow>
-        </TableHeader>
+          </colgroup>
 
-        <TableBody>
-          {data.goodsAndServices.map(item => (
-            <TableRow key={item}>
-              <TableCell className="font-medium flex items-center justify-between">
-                {item}
-                {
-                  role === "admin" ?
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="cursor-pointer"><Ellipsis/></DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem>Змінити</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>Видалити</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  : <span>{item}</span>
-                }
-              </TableCell>
+          <TableHeader className="bg-sidebar-accent text-base">
+            <TableRow> 
+              <TableHead className="sticky left-0 z-20 min-w-[400px] bg-sidebar-accent border-r py-4">
+                Перелік товарів та робіт
+              </TableHead>
 
+              {data.servicesItems.map(service => (
+                <TableHead className="w-[150px] min-w-[150px] max-w-[150px] text-center border-r" key={service.id}>
+                  {
+                    role === "admin" ?
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="cursor-pointer">{service.title}</DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => dispatch(openModal({type: "phone-services", payload: {mode: "services", data: service}}))} >Змінити</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <AlertDialogDemo trigger={<DropdownMenuItem onSelect={e  => e.preventDefault()}>Видалити</DropdownMenuItem>} title="Видалити сервіс?" description="Ви точно впевнені? Після видалення відновлення не можливе!" submit={() => handleDeleteService(service)} />
+                          
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    : <span>{service.title} </span>
+                  }
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {data.goodsAndServices.map(item => (
+              <TableRow key={item} className="hover:*:bg-sidebar-accent">
+                <TableCell className="sticky left-0 z-10 min-w-[400px] bg-background border-r wrap-break-word whitespace-normal hover:">
+                  {item}
+                </TableCell>
+                {servicesWithSet.map(service => (
+                  <TableCell key={service.id} className="w-[150px] min-w-[150px] max-w-[150px] text-center border-l">
+                    {service.itemsSet.has(item) ? (
+                      <CircleCheckBig className="inline-block text-green-600" />
+                    ) : (
+                      <Minus className="inline-block text-muted-foreground" />
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+
+          <TableFooter className="text-base">
+            <TableRow>
+              <TableCell className="sticky left-0 z-10 min-w-[400px] bg-sidebar-accent border-r ">Вартість послуг</TableCell>
               {servicesWithSet.map(service => (
-                <TableCell key={service.id} className="text-center border-l">
-                  {service.itemsSet.has(item) ? (
-                    <CircleCheckBig className="inline-block text-green-600" />
-                  ) : (
-                    <Minus className="inline-block text-muted-foreground" />
-                  )}
+                <TableCell className="w-[150px] min-w-[150px] max-w-[150px] bg-sidebar-accent text-center border-l p-4" key={service.id}>
+                  {formatPrice(service.price)}
                 </TableCell>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-
-        <TableFooter>
-          <TableRow>
-            <TableCell>Вартість послуг</TableCell>
-
-            {servicesWithSet.map(service => (
-              <TableCell className="text-center py-4" key={service.id}>
-                {formatPrice(service.price)}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableFooter>
-      </Table>
+          </TableFooter>
+          
+        </Table>
+      </div>
     </div>
   )
 }

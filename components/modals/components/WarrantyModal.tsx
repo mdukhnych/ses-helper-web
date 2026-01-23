@@ -12,11 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '@/components/ui/textarea';
 import useFirestore from '@/hooks/useFirestore';
-import { toast } from 'sonner';
 import { WarrantyDataItem } from '@/types/services';
 import { Spinner } from '@/components/ui/spinner';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { closeModal } from '@/store/slices/modalSlice';
+import { checkUniqueId } from '@/utils';
 
 
 export default function WarrantyModal() {
@@ -58,19 +58,7 @@ export default function WarrantyModal() {
     }
   };
 
-  const checkUniqueId = (id: string, ids: string[]) => {
-    if (id === "") {
-      toast.error("Поле ID не може бути порожнім.", { position: "top-center" });
-      return false;
-    }
-
-    if (ids.includes(id)) {
-      toast.error("Послуга з таким ID вже зареєстрована.", { position: "top-center" });
-      return false;
-    } else {
-      return true;
-    }
-  }
+  
 
   const onFormSubmitHandler = async (e: FormEvent) => {
     e.preventDefault();
@@ -91,88 +79,88 @@ export default function WarrantyModal() {
 
   return (
     <form onSubmit={onFormSubmitHandler}>
-          <DialogHeader className='py-4 border-b'>
-            <DialogTitle>{data ? "Редактор" : "Додати"}</DialogTitle>
-            <DialogDescription>
-              {data ? 
-                `Внесіть зміни до послуги ${data.title}`
-                : "Додавання нової послуги"
-              }
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {
-              !data ? 
-                <div className="grid gap-3">
-                  <Label htmlFor="warrabty-id">Ідентифікатор послуги (ID):</Label>
-                  <Input
-                    id="warrabty-id"
-                    name="id"
-                    placeholder="Введіть ID послуги..."
-                    value={formData.id}
-                    onChange={handleChange}
-                  />
-                </div>
-              : null
-            }
+      <DialogHeader className='py-4 border-b'>
+        <DialogTitle>{data ? "Редактор" : "Додати"}</DialogTitle>
+        <DialogDescription>
+          {data ? 
+            `Внесіть зміни до послуги ${data.title}`
+            : "Додавання нової послуги"
+          }
+        </DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4 py-4">
+        {
+          !data ? 
             <div className="grid gap-3">
-              <Label htmlFor="warrabty-title">Назва послуги:</Label>
+              <Label htmlFor="warrabty-id">Ідентифікатор послуги (ID):</Label>
               <Input
-                id="warrabty-title"
-                name="title"
-                placeholder="Введіть назву послуги..."
-                value={formData.title}
+                id="warrabty-id"
+                name="id"
+                placeholder="Введіть ID послуги..."
+                value={formData.id}
                 onChange={handleChange}
               />
             </div>
-            <div className="grid gap-3">
-              <Label htmlFor="warranty-price">Ціна послуги у %:</Label>
-              <Input
-                id="warranty-price"
-                name="price"
-                placeholder="Введіть ціну у відсотках..."
-                value={(formData.price * 100).toFixed(0)}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="grid gap-3">
-              <Label htmlFor="warranty-description">Опис для послуги</Label>
-              <Textarea
-                className="max-h-[150px] overflow-y-auto resize-none"
-                id="warranty-description"
-                name="description"
-                placeholder="Введіть опис послуги..."
-                value={formData.description}
-                onChange={handleChange}
-              />
-              <p className="text-muted-foreground text-sm">
-                {"Використовуйте тег <br> для перенесення рядка."}
-              </p>
-            </div>
-          </div>
-          <DialogFooter className='pt-4 border-t'>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => dispatch(closeModal())}
-              disabled={loading}
-              className='cursor-pointer'
-            >
-              Відміна
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="cursor-pointer relative flex items-center justify-center"
-            >
-              <span className={loading ? "opacity-0" : "opacity-100"}>Зберегти</span>
-              {loading && (
-                <span className="absolute inset-0 flex items-center justify-center">
-                  <Spinner />
-                </span>
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
+          : null
+        }
+        <div className="grid gap-3">
+          <Label htmlFor="warrabty-title">Назва послуги:</Label>
+          <Input
+            id="warrabty-title"
+            name="title"
+            placeholder="Введіть назву послуги..."
+            value={formData.title}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="grid gap-3">
+          <Label htmlFor="warranty-price">Ціна послуги у %:</Label>
+          <Input
+            id="warranty-price"
+            name="price"
+            placeholder="Введіть ціну у відсотках..."
+            value={(formData.price * 100).toFixed(0)}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="grid gap-3">
+          <Label htmlFor="warranty-description">Опис для послуги</Label>
+          <Textarea
+            className="max-h-[150px] overflow-y-auto resize-none"
+            id="warranty-description"
+            name="description"
+            placeholder="Введіть опис послуги..."
+            value={formData.description}
+            onChange={handleChange}
+          />
+          <p className="text-muted-foreground text-sm">
+            {"Використовуйте тег <br> для перенесення рядка."}
+          </p>
+        </div>
+      </div>
+      <DialogFooter className='pt-4 border-t'>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => dispatch(closeModal())}
+          disabled={loading}
+          className='cursor-pointer'
+        >
+          Відміна
+        </Button>
+        <Button
+          type="submit"
+          disabled={loading}
+          className="cursor-pointer relative flex items-center justify-center"
+        >
+          <span className={loading ? "opacity-0" : "opacity-100"}>Зберегти</span>
+          {loading && (
+            <span className="absolute inset-0 flex items-center justify-center">
+              <Spinner />
+            </span>
+          )}
+        </Button>
+      </DialogFooter>
+    </form>
   )
 }

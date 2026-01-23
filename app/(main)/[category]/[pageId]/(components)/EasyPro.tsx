@@ -47,6 +47,7 @@ export default function EasyPro() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+
     const reader = new FileReader();
     reader.onload = (evt) => {
       const bstr = evt.target?.result;

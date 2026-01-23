@@ -1,7 +1,6 @@
 import { ModalType } from "@/components/modals/modal.config";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-
 interface OpenModalPayload<T = unknown> {
   type: ModalType;
   payload?: T;

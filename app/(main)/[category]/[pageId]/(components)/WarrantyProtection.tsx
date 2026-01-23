@@ -29,7 +29,6 @@ import { formatPrice } from '@/utils';
 import { WarrantyDataItem } from '@/types/services';
 import { openModal } from '@/store/slices/modalSlice';
 
-
 export default function WarrantyProtection() {
   const [devicePrice, setDevicePrice] = useState('');
 
@@ -115,4 +114,3 @@ export default function WarrantyProtection() {
     </div>
   )
 }
-
