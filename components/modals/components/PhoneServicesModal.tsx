@@ -105,7 +105,7 @@ const GoodsAndServicesModal = ({data}: {data: string[] | null}) => {
   )
 }
 
-const PhoneServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
+const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
   const { goodsAndServices, servicesItems } = useAppSelector(state => state.services.data.find(item => item.id === "phone-services"))?.data as PhoneServicesData;
   const [service, setService] = useState<PhoneServiceItem>(
     data ? data : {
@@ -202,7 +202,7 @@ const PhoneServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
         </div>
         <div className="flex flex-col">
           <Label htmlFor='order' className='ml-2'>Порядок:</Label>
-          <Input type="number" id='prder' placeholder='Введіть порядковий номер...' value={service.order ? service.order : ""} onChange={e => setService({...service, order: e.target.value.length > 0 ? +e.target.value : null})} />
+          <Input type="number" id='order' placeholder='Введіть порядковий номер...' value={service.order ? service.order : ""} onChange={e => setService({...service, order: e.target.value.length > 0 ? +e.target.value : null})} />
         </div>
         
       </div>
@@ -232,7 +232,7 @@ export default function PhoneServicesModal() {
 
   if (!payload) return <Spinner />
   if (payload.mode === "goods") return <GoodsAndServicesModal data={payload.data} />
-  if (payload.mode === "services") return <PhoneServiceModal data={payload.data} />
+  if (payload.mode === "services") return <ServiceModal data={payload.data} />
 }
 
 const EditPopover = ({items, setItems, index}: {

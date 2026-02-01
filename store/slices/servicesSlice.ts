@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { collection, getDocs } from "firebase/firestore";
 import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
-import { EasyProData, PhoneService, PhoneServiceItem, PhoneServicesData, Services, WarrantyDataItem } from "@/types/services";
+import { EasyProData, EktaService, EktaServicesDataItem, PhoneService, PhoneServicesData, Services, WarrantyDataItem } from "@/types/services";
 
 export const fetchServices = createAsyncThunk(
   "services/fetchServices",
@@ -51,6 +51,11 @@ const servicesSlice = createSlice({
       if (!phoneServiceStore) return;
       phoneServiceStore.data = action.payload;
     },
+    setEktaServicesData: (state, action: PayloadAction<EktaServicesDataItem[]>) => {
+      const ektaServiceStore = state.data.find(item => item.id === "ekta-services") as EktaService;
+      if(!ektaServiceStore) return;
+      ektaServiceStore.data = action.payload;
+    },
     resestServicesStore: () => initialState,
   },
   extraReducers: builder => {
@@ -70,5 +75,12 @@ const servicesSlice = createSlice({
   }
 });
 
-export const { setServicesStore, setWarrantyDataStore, setEasyproPricelist, resestServicesStore, setPhoneServicesData } = servicesSlice.actions;
+export const { 
+  setServicesStore, 
+  setWarrantyDataStore, 
+  setEasyproPricelist, 
+  resestServicesStore, 
+  setPhoneServicesData,
+  setEktaServicesData 
+} = servicesSlice.actions;
 export default servicesSlice.reducer;

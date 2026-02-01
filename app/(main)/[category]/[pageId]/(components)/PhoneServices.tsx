@@ -116,7 +116,7 @@ export default function PhoneServices() {
           <TableBody>
             {data.goodsAndServices.map(item => (
               <TableRow key={item} className="hover:*:bg-sidebar-accent">
-                <TableCell className="sticky left-0 z-10 min-w-[400px] bg-background border-r wrap-break-word whitespace-normal hover:">
+                <TableCell className="sticky left-0 z-10 min-w-[400px] bg-background border-r wrap-break-word whitespace-normal">
                   {item}
                 </TableCell>
                 {servicesWithSet.map(service => (

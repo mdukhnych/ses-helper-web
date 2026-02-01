@@ -1,4 +1,5 @@
 // modal.config.ts
+import EktaServiceModal from './components/EktaServiceModal'
 import PhoneServicesModal from './components/PhoneServicesModal'
 import WarrantyModal from './components/WarrantyModal'
 
@@ -10,6 +11,10 @@ export const MODAL_CONFIG = {
   'phone-services': {
     title: 'Послуги налаштування смартфонів',
     Component: PhoneServicesModal,
+  },
+  'ekta-services': {
+    title: 'ЕКТА-Сервіс',
+    Component: EktaServiceModal,
   },
 } as const
 

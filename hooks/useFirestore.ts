@@ -1,7 +1,7 @@
 import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setEasyproPricelist, setPhoneServicesData, setWarrantyDataStore } from "@/store/slices/servicesSlice";
-import { EasyProPricelistItem, PhoneService, PhoneServiceItem, PhoneServicesData, WarrantyDataItem } from "@/types/services";
+import { setEasyproPricelist, setEktaServicesData, setPhoneServicesData, setWarrantyDataStore } from "@/store/slices/servicesSlice";
+import { EasyProPricelistItem, EktaService, EktaServicesDataItem, PhoneService, PhoneServiceItem, PhoneServicesData, WarrantyDataItem } from "@/types/services";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { toast } from "sonner";
 
@@ -15,6 +15,11 @@ type PhoneServicesActionType =
     action: "services";
     items: PhoneServiceItem[];
   };
+
+type EktaServicesActionType = {
+  action: "add" | "update" | "delete";
+  item: EktaServicesDataItem;
+}
 
 export default function useFirestore() {
   const dispatch = useAppDispatch();
@@ -136,5 +141,52 @@ export default function useFirestore() {
 
   }
 
-  return { modifyWarrantyService, updateEasyproPricelist, updatePhoneServicesData };
+  const updateEktaServicesData = async (data: EktaServicesActionType) => {
+    if (!store.find(item => item.id === "ekta-services")) {
+      toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });
+      return;
+    }
+
+    try {
+      const ref = doc(FIREBASE_FIRESTORE, "services", "ekta-services");
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        toast.error("Документ не знайдено!", { position: "top-center" });
+        return;
+      }
+
+      const ektaServices = snap.data() as EktaService;
+      let updatedData: EktaServicesDataItem[] = ektaServices.data;
+
+      switch (data.action) {
+        case "add":
+          updatedData = [...updatedData, data.item]
+          break;
+        case "update":
+          updatedData = ektaServices.data.map(item => item.id === data.item.id ? data.item : item);
+          break;
+        case "delete":
+          updatedData = ektaServices.data.filter(item => item.id !== data.item.id);
+          break;
+        default:
+          toast.error("Невідома дія!", { position: "top-center" });
+          break;
+      }
+
+      dispatch(setEktaServicesData(updatedData));
+      updateDoc(ref, {data: updatedData});
+
+    } catch (error) {
+      toast.error("Сталась помилка.");
+      console.error("Error => " + error)
+    }
+  }
+
+  return { 
+    modifyWarrantyService, 
+    updateEasyproPricelist, 
+    updatePhoneServicesData,
+    updateEktaServicesData 
+  };
 }

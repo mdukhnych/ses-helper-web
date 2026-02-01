@@ -61,15 +61,16 @@ export interface PhoneService extends BaseServiceItem {
 
 
 // Ekta Serviecs
-interface EktaListItem extends BaseServiceItem {
+export interface EktaListItem extends BaseServiceItem {
   price: number;
+  productCode?: string;
   description: string;
 }
 export interface EktaServicesDataItem extends BaseServiceItem {
   list: EktaListItem[];
 }
 
-interface EktaService extends BaseServiceItem {
+export interface EktaService extends BaseServiceItem {
   type: 'ekta';
   data: EktaServicesDataItem[];
 }
