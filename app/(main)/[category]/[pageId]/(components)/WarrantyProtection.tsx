@@ -25,9 +25,10 @@ import { Button } from '@/components/ui/button';
 import { Pencil, Plus, Trash } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import useFirestore from '@/hooks/useFirestore';
-import { formatPrice } from '@/utils';
+import { formatPrice, textWrapping } from '@/utils';
 import { WarrantyDataItem } from '@/types/services';
 import { openModal } from '@/store/slices/modalSlice';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
 export default function WarrantyProtection() {
   const [devicePrice, setDevicePrice] = useState('');
@@ -56,9 +57,12 @@ export default function WarrantyProtection() {
           <span className=''>Вартість:</span>
           <Input id='devicePrice' placeholder='Введіть вартість пристрою...' type='number' value={devicePrice} onChange={e => setDevicePrice(e.target.value)}/>
         </div>
-        <div>
-          <Button type='button' className='cursor-pointer' onClick={addButtonHandler}><Plus/></Button>
-        </div>
+        {
+          role === "admin" && 
+            <div>
+              <Button type='button' className='cursor-pointer' onClick={addButtonHandler}><Plus/></Button>
+            </div>
+        }
       </div>
       <Accordion type="multiple" className="flex flex-wrap gap-3 items-start mt-5">
         {
@@ -79,29 +83,18 @@ export default function WarrantyProtection() {
                   <div className="flex justify-self-end bg-chart-2 p-1 px-2 rounded-bl-lg font-bold">{(item.price * 100).toFixed(0)}%</div>
 
                   <div className='p-4 pt-2'>
-                    { item.description.replace(/<br\s*\/?>/g, '\n') }
+                    {textWrapping(item.description) }
                   </div>
                   {
                     role === "admin" ? 
                       <div className='border-t mt-4 p-4 pb-0 flex gap-2 items-center justify-end'>
                         <Button type='button' variant={'default'} className='cursor-pointer' onClick={() => editButtonHandler(item)}><Pencil/></Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button type='button' variant={'destructive'} className='cursor-pointer'><Trash /></Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Ви точно бажаєте видалити: {item.title}?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Після видалення сервісу відновити дані буде не можливо.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Відміна</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => modifyWarrantyService("delete", item)}>Видалити</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <ConfirmDialog 
+                          trigger={<Button type='button' variant={'destructive'} className='cursor-pointer'><Trash /></Button>} 
+                          title='Точно видалити?' 
+                          description='Скасувати операцію буде неможливо!'  
+                          onConfirm={() => modifyWarrantyService("delete", item)}
+                        />
                       </div>
                     : null
                   }

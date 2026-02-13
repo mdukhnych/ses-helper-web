@@ -27,8 +27,8 @@ import { CircleCheckBig, Minus } from "lucide-react";
 import { formatPrice } from "@/utils";
 import { PhoneServiceItem, PhoneServicesData } from "@/types/services";
 import { openModal } from "@/store/slices/modalSlice";
-import AlertDialogDemo from "@/components/shared/AlertDialog";
 import useFirestore from "@/hooks/useFirestore";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 
 function AdminActions({data}: {data: PhoneServicesData}) {
   const dispatch = useAppDispatch();
@@ -66,9 +66,9 @@ export default function PhoneServices() {
     )
   }
 
-  const handleDeleteService = (service: PhoneServiceItem) => {
+  const handleDeleteService = async (service: PhoneServiceItem) => {
     const updatedServices = data.servicesItems.filter(item => item.id !== service.id);
-    updatePhoneServicesData({action: "services", items: updatedServices});
+    await updatePhoneServicesData({action: "services", items: updatedServices});
   }
 
   return (
@@ -102,8 +102,13 @@ export default function PhoneServices() {
                         <DropdownMenuContent>
                           <DropdownMenuItem onClick={() => dispatch(openModal({type: "phone-services", payload: {mode: "services", data: service}}))} >Змінити</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <AlertDialogDemo trigger={<DropdownMenuItem onSelect={e  => e.preventDefault()}>Видалити</DropdownMenuItem>} title="Видалити сервіс?" description="Ви точно впевнені? Після видалення відновлення не можливе!" submit={() => handleDeleteService(service)} />
-                          
+                          {/* <AlertDialogDemo trigger={<DropdownMenuItem onSelect={e  => e.preventDefault()}>Видалити</DropdownMenuItem>} title="Видалити сервіс?" description="Ви точно впевнені? Після видалення відновлення не можливе!" submit={() => handleDeleteService(service)} /> */}
+                          <ConfirmDialog 
+                            trigger={<DropdownMenuItem onSelect={e  => e.preventDefault()}>Видалити</DropdownMenuItem>}
+                            title="Видалити сервіс?"
+                            description="Скасувати операцію буде неможливо!"
+                            onConfirm={() => handleDeleteService(service)}
+                          />
                         </DropdownMenuContent>
                       </DropdownMenu>
                     : <span>{service.title} </span>

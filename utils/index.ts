@@ -2,11 +2,13 @@ import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
 import { toast } from "sonner";
 
+const currencyFormatter = new Intl.NumberFormat("uk-UA", {
+  style: "currency",
+  currency: "UAH",
+});
+
 export const formatPrice = (value: number) =>
-  new Intl.NumberFormat("uk-UA", {
-    style: "currency",
-    currency: "UAH",
-  }).format(value);
+  currencyFormatter.format(value);
 
 export const checkUniqueId = (id: string, ids: string[]) => {
     if (id === "") {
@@ -21,6 +23,8 @@ export const checkUniqueId = (id: string, ids: string[]) => {
       return true;
     }
   }
+
+export const textWrapping = (text: string) => text.replace(/<br\s*\/?>\s*/gi, '\n\n');
 
 export async function renameFirestoreDocument({
   collectionName, oldId, newId

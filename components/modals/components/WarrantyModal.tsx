@@ -1,6 +1,6 @@
 'use client'
 
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Button } from "@/components/ui/button"
 import {
   DialogDescription,
@@ -24,25 +24,23 @@ export default function WarrantyModal() {
   const warrantyItems = useAppSelector(state => state.services.data.find(item => item.id === "warranty-protection"))?.data as WarrantyDataItem[];
   
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState(
-    data ?
-      {
-        ...data
-      } : 
-      {
-        id: "",
-        title: "",
-        price: 0,
-        description: ""
-      }
-  );
+  const defaultFormData: WarrantyDataItem = useMemo(() => ({
+    id: "",
+    title: "",
+    price: 0,
+    description: ""
+  }), []);
+  const [formData, setFormData] = useState(defaultFormData);
+
+  useEffect(() => {
+    setFormData(data ?? defaultFormData)
+  }, [data, defaultFormData])
 
   const dispatch = useAppDispatch();
 
   const ids = warrantyItems.map(item => item.id);
   
   const { modifyWarrantyService } = useFirestore();
-
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -57,8 +55,6 @@ export default function WarrantyModal() {
       setFormData({ ...formData, [name]: value });
     }
   };
-
-  
 
   const onFormSubmitHandler = async (e: FormEvent) => {
     e.preventDefault();

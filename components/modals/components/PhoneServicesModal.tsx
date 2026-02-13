@@ -10,7 +10,6 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { closeModal } from '@/store/slices/modalSlice';
 import { Input } from '@/components/ui/input';
-import AlertDialogDemo from '@/components/shared/AlertDialog';
 import {
   Popover,
   PopoverContent,
@@ -21,6 +20,7 @@ import { PhoneServiceItem, PhoneServicesData } from '@/types/services';
 import { Label } from '@radix-ui/react-label';
 import useFirestore from '@/hooks/useFirestore';
 import { checkUniqueId } from '@/utils';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
 type PhoneServicesModalPayload =
   | {
@@ -69,7 +69,12 @@ const GoodsAndServicesModal = ({data}: {data: string[] | null}) => {
         <DialogTitle>{"Налаштування товарів та робіт"}</DialogTitle>
         <DialogDescription className='flex items-center justify-between'>
           Внесіть зміни
-          <AlertDialogDemo trigger={<Button variant={"destructive"} type="button">Видалити все</Button>} title='Ви впевнені?' description='Ви точно впевнені в своєму рішені? Відновити видалені дані буде не можливо!' submit={() => setItems([])} />
+          <ConfirmDialog 
+            trigger={<Button variant={"destructive"} type="button">Видалити все</Button>} 
+            title='Ви впевнені?'
+            description='Скасувати операцію буде неможливо!'
+            onConfirm={() => setItems([])}
+          />
         </DialogDescription>
       </DialogHeader>
       <ScrollArea className="h-72 w-full rounded-md border">
@@ -144,7 +149,7 @@ const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
   const { updatePhoneServicesData } = useFirestore();
 
   return(
-    <div>
+    <div className="w-[750px]">
       <DialogHeader className='py-4'>
         <DialogTitle>
           {

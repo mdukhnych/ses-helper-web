@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setEasyproPricelist, setEktaServicesData, setPhoneServicesData, setWarrantyDataStore } from "@/store/slices/servicesSlice";
 import { EasyProPricelistItem, EktaService, EktaServicesDataItem, PhoneService, PhoneServiceItem, PhoneServicesData, WarrantyDataItem } from "@/types/services";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { useCallback } from "react";
 import { toast } from "sonner";
 
 type WarrantyActionType = "add" | "update" | "delete";
@@ -23,11 +24,9 @@ type EktaServicesActionType = {
 
 export default function useFirestore() {
   const dispatch = useAppDispatch();
-  const store = useAppSelector(state =>
-    state.services.data
-  );
+  const store = useAppSelector(state => state.services.data);
 
-  const modifyWarrantyService = async (action: WarrantyActionType, item: WarrantyDataItem) => {
+  const modifyWarrantyService = useCallback(async (action: WarrantyActionType, item: WarrantyDataItem) => {
     if (!store.find(item => item.id === "warranty-protection")) {
       toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });
       return;
@@ -73,9 +72,9 @@ export default function useFirestore() {
       console.error("Помилка при зміні елемента:", error);
       toast.error("Сталася помилка. Спробуйте пізніше.", { position: "top-center" });
     }
-  };
+  }, [dispatch, store]);
 
-  const updateEasyproPricelist = async (newPricelist: EasyProPricelistItem[], setLoading: React.Dispatch<React.SetStateAction<boolean>>) => {
+  const updateEasyproPricelist = useCallback(async (newPricelist: EasyProPricelistItem[], setLoading: React.Dispatch<React.SetStateAction<boolean>>) => {
     setLoading(true);
     if (!store.find(item => item.id === "easy-pro")) {
       toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });
@@ -99,9 +98,9 @@ export default function useFirestore() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [dispatch, store]);
 
-  const updatePhoneServicesData = async (data: PhoneServicesActionType) => {
+  const updatePhoneServicesData = useCallback(async (data: PhoneServicesActionType) => {
 
     if (!store.find(item => item.id === "phone-services")) {
       toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });
@@ -139,9 +138,9 @@ export default function useFirestore() {
       console.error("Error => " + error)
     }
 
-  }
+  }, [dispatch, store]);
 
-  const updateEktaServicesData = async (data: EktaServicesActionType) => {
+  const updateEktaServicesData = useCallback(async (data: EktaServicesActionType) => {
     if (!store.find(item => item.id === "ekta-services")) {
       toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });
       return;
@@ -167,6 +166,7 @@ export default function useFirestore() {
           updatedData = ektaServices.data.map(item => item.id === data.item.id ? data.item : item);
           break;
         case "delete":
+          
           updatedData = ektaServices.data.filter(item => item.id !== data.item.id);
           break;
         default:
@@ -181,7 +181,7 @@ export default function useFirestore() {
       toast.error("Сталась помилка.");
       console.error("Error => " + error)
     }
-  }
+  }, [dispatch, store]);
 
   return { 
     modifyWarrantyService, 

@@ -20,7 +20,7 @@ export function AppModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[750px]">
+      <DialogContent className="sm:max-w-fit">
         {children}
       </DialogContent>
     </Dialog>

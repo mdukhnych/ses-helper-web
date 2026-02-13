@@ -24,8 +24,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import useFirestore from '@/hooks/useFirestore';
-import { formatPrice } from '@/utils';
+import { formatPrice, textWrapping } from '@/utils';
 import { EasyProData, EasyProDescription, EasyProPricelistItem } from '@/types/services';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function EasyPro() {
   const [search, setSearch] = useState("");
@@ -66,7 +67,8 @@ export default function EasyPro() {
   };
 
   return (
-    <div className='w-full max-w-[1200px] flex flex-col'>
+    <div className='w-full max-w-[1500px] h-full flex flex-col'>
+
       <div className='flex items-center gap-2 w-full pb-4'>
         <span>Модель:</span>
         <Input id='model' placeholder='Введіть модель пристрою...' value={search} onChange={e => setSearch(e.target.value)} />
@@ -82,75 +84,49 @@ export default function EasyPro() {
       {
         loading 
           ? <div className="flex items-center"><Spinner className='size-20' /></div>
-          : <div className="flex gap-4">
-            <div className="pricelist flex-2">
-              <h3></h3>
-              <div className="flex flex-col w-full">
-                <Table className='table-fixed'>
-                  <colgroup>
-                    <col style={{ width: "25%" }} />
-                    <col style={{ width: "25%" }} />
-                    <col style={{ width: "25%" }} />
-                    <col style={{ width: "25%" }} />
-                  </colgroup>
+          : <div className="flex gap-4 flex-1 overflow-hidden">
+              <ScrollArea className='relative border w-full rounded-lg overflow-hidden '>
+                <Accordion type="single" collapsible >
+                  <AccordionItem value="item-1">
+                    <AccordionTrigger className='m-0 p-0 cursor-pointer'>
+                      <div className="grid grid-cols-[2fr_1fr_1fr_1fr] bg-sidebar-accent border-b font-semibold text-sm sticky top-0 z-20 w-full">
+                        <div className="p-4 border-r">Модель</div>
+                        <div className="p-4 border-r text-center">Easy Pro</div>
+                        <div className="p-4 border-r text-center">Easy Pro +2</div>
+                        <div className="p-4 text-center">Easy Pro +3</div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className='bg-accent'>
+                      <div className="grid grid-cols-[2fr_1fr_1fr_1fr] bg-sidebar-accent border-b font-semibold text-sm sticky top-0 z-20 w-full">
+                        <div className="p-4 border-r"></div>
+                        <div className="p-4 border-r " style={{ whiteSpace: 'pre-line' }}>{textWrapping(data.description.easypro.text)}</div>
+                        <div className="p-4 border-r " style={{ whiteSpace: 'pre-line' }}>{textWrapping(data.description.easypro2.text)}</div>
+                        <div className="p-4 " style={{ whiteSpace: 'pre-line' }}>{textWrapping(data.description.easypro3.text)}</div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
 
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Модель</TableHead>
-                      <TableHead>Easy Pro</TableHead>
-                      <TableHead>Easy Pro +2</TableHead>
-                      <TableHead>Easy Pro +3</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                </Table>
-
-                <div className="max-h-[70vh] overflow-y-scroll">
-                  <Table className='table-fixed'>
-                    <colgroup>
-                      <col style={{ width: "25%" }} />
-                      <col style={{ width: "25%" }} />
-                      <col style={{ width: "25%" }} />
-                      <col style={{ width: "25%" }} />
-                    </colgroup>
-                  
-                    <TableBody>
-                      {
-                        filteredList.map((item, i) => (
-                          <TableRow key={i}>
-                            <TableCell className="font-medium">{item.model}</TableCell>
-                            <TableCell>{item.easypro && formatPrice(item.easypro)}</TableCell>
-                            <TableCell>{item.easypro2 && formatPrice(item.easypro2)}</TableCell>
-                            <TableCell>{item.easypro3 && formatPrice(item.easypro3)}</TableCell>
-                          </TableRow>
-                        ))
-                      }
-                    </TableBody>
-                  </Table>
+                <div className="flex flex-col">
+                  {filteredList.map((item, i) => (
+                    <div key={i} className="grid grid-cols-[2fr_1fr_1fr_1fr] border-b last:border-b-0 hover:bg-muted/50 transition-colors">
+                      <div className="p-4 border-r flex items-center font-medium">
+                        {item.model}
+                      </div>
+                      <div className="p-4 border-r flex items-center justify-center">
+                        {item.easypro ? formatPrice(item.easypro) : "—"}
+                      </div>
+                      <div className="p-4 border-r flex items-center justify-center">
+                        {item.easypro2 ? formatPrice(item.easypro2) : "—"}
+                      </div>
+                      <div className="p-4 flex items-center justify-center">
+                        {item.easypro3 ? formatPrice(item.easypro3) : "—"}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-              
+              </ScrollArea>
             </div>
-
-            <div className="flex-1">
-              <Accordion type="single" collapsible>
-                {
-                  Object.keys(data.description).sort().map((item, i) => {
-                    const key = item as keyof EasyProDescription;
-                    return (
-                      <Card key={item} className='p-0 my-2'>
-                        <AccordionItem value={`item-${i}`}>
-                          <AccordionTrigger className='p-4 cursor-pointer'>{data.description[key].title}</AccordionTrigger>
-                          <AccordionContent className='py-4 border-t p-4 whitespace-pre-line'>
-                            { data.description[key].text.replace(/<br\s*\/?>/g, '\n') }
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Card>
-                    )
-                  })
-                }
-              </Accordion>
-            </div>
-          </div>
       }
     </div>
   )
