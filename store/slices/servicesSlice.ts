@@ -16,6 +16,7 @@ export const fetchServices = createAsyncThunk(
   }
 );
 
+
 interface IServicesStore {
   loading: boolean;
   error: string | null;
@@ -41,7 +42,7 @@ const servicesSlice = createSlice({
       service.data = action.payload;
     },
     setEasyproPricelist: (state, action) => {
-      const easypro = state.data.find(item => item.id === "easypro")?.data as EasyProData;
+      const easypro = state.data.find(item => item.id === "easy-pro")?.data as EasyProData;
       if (!easypro) return;
       easypro.pricelist = action.payload;
     },

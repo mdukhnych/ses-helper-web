@@ -64,7 +64,7 @@ const GoodsAndServicesModal = ({data}: {data: string[] | null}) => {
   }
 
   return(
-    <div>
+    <div className='w-[750px]'>
       <DialogHeader className='py-4'>
         <DialogTitle>{"Налаштування товарів та робіт"}</DialogTitle>
         <DialogDescription className='flex items-center justify-between'>

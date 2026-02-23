@@ -9,17 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Pencil, Plus, Trash } from 'lucide-react';
@@ -31,11 +21,10 @@ import { openModal } from '@/store/slices/modalSlice';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
 export default function WarrantyProtection() {
+  const dispatch = useAppDispatch();
   const [devicePrice, setDevicePrice] = useState('');
 
   const { modifyWarrantyService } = useFirestore();
-
-  const dispatch = useAppDispatch();
 
   const addButtonHandler = () => {
     dispatch(openModal({type: 'warranty-protection', payload: null}));
@@ -80,7 +69,7 @@ export default function WarrantyProtection() {
                 </AccordionTrigger>
 
                 <AccordionContent className="text-sm leading-relaxed whitespace-pre-wrap relative">
-                  <div className="flex justify-self-end bg-chart-2 p-1 px-2 rounded-bl-lg font-bold">{(item.price * 100).toFixed(0)}%</div>
+                  <div className="flex justify-self-end bg-chart-2 p-1 px-2 rounded-bl-lg font-bold text-white">{(item.price * 100).toFixed(0)}%</div>
 
                   <div className='p-4 pt-2'>
                     {textWrapping(item.description) }

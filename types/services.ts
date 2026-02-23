@@ -18,8 +18,10 @@ export interface WarrantyService extends BaseServiceItem {
 
 // Easy Pro
 interface EasyProDescrItem {
+  id: string;
   title: string;
   text: string;
+  shortName?: string;
 }
 export interface EasyProPricelistItem {
   model: string;
@@ -27,13 +29,9 @@ export interface EasyProPricelistItem {
   easypro2?: number | null;
   easypro3?: number | null;
 } 
-export interface EasyProDescription {
-  easypro: EasyProDescrItem;
-  easypro2: EasyProDescrItem;
-  easypro3: EasyProDescrItem;
-}
+
 export interface EasyProData {
-  description: EasyProDescription;
+  description: EasyProDescrItem[];
   pricelist: EasyProPricelistItem[];
 }
 
@@ -41,7 +39,6 @@ interface EasyProService extends BaseServiceItem {
   type: 'easypro';
   data: EasyProData;
 }
-
 
 // Phone Services
 export interface PhoneServiceItem extends BaseServiceItem {

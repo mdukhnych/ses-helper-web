@@ -116,15 +116,6 @@ export default function EktaService() {
             description='Скасувати операцію буде неможливо!'
             onConfirm={() => onDeleteServiceItem({service, item})}
           />
-          {/* <AlertDialogDemo
-            trigger={
-              <ContextMenuItem onSelect={(e) => e.preventDefault()}>
-                Видалити
-              </ContextMenuItem>
-            }
-            title={`Видалити ${item.title}?`}
-            submit={() => onDeleteServiceItem({service, item})}
-          /> */}
         </ContextMenuContent>
       </ContextMenu>
     );
@@ -151,7 +142,6 @@ export default function EktaService() {
                            description='Скасувати операцію буде неможливо!'
                            onConfirm={() => onDeleteService(service)}
                         />
-                        {/* <AlertDialogDemo trigger={<Button className='cursor-pointer' type='button'>Видалити групу</Button>} title={`Видалити групу: ${service.title}?`} description="Після видалення інформації відновлення буде не можливе!" submit={() => onDeleteService(service)} /> */}
                         <Button className='cursor-pointer' type='button' onClick={() => dispatch(openModal({type: "ekta-services", payload: {mode: "goods", data: {service: service, listItem: null}}}))}>Додати елемент</Button>
                         <ConfirmDialog 
                            trigger={<Button disabled={service.list.length === 0} className='cursor-pointer' type='button'>Очистити групу</Button>} 
@@ -159,7 +149,6 @@ export default function EktaService() {
                            description='Скасувати операцію буде неможливо!'
                            onConfirm={() => onClearService(service)}
                         />
-                        {/* <AlertDialogDemo trigger={<Button disabled={service.list.length === 0} className='cursor-pointer' type='button'>Очистити групу</Button>} title={`Очистити групу: ${service.title}?`} description="Після видалення інформації відновлення буде не можливе!" submit={() => onClearService(service)} /> */}
                       </div>
                   }
                   <span className='text-muted-foreground text-s my-2 block'>Натисніть двічі щоб відкрити: РЕГЛАМЕНТ ВИКОНАННЯ ПІДРЯДНИКОМ РОБІТ</span>
