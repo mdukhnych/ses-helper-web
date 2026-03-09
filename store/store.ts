@@ -3,6 +3,7 @@ import userReducer from './slices/userSlice';
 import servicesReducer from './slices/servicesSlice';
 import breadcrumbsReducer from './slices/breadcrumbsSlice';
 import modalReducer from './slices/modalSlice';
+import informationReducer from './slices/informationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     services: servicesReducer,
     breadcrumbs: breadcrumbsReducer,
     modal: modalReducer,
+    information: informationReducer
   },
 })
 

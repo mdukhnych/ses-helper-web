@@ -2,25 +2,29 @@
 
 import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
-import {  DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { Pencil, Plus, X } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Pencil,  X } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { closeModal } from '@/store/slices/modalSlice';
 import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
 import { Spinner } from '@/components/ui/spinner';
-import { PhoneServiceItem, PhoneServicesData } from '@/types/services';
+import { BaseServiceItem, GoodsAndServicesItem, PhoneServiceItem, PhoneServicesData } from '@/types/services';
 import { Label } from '@radix-ui/react-label';
 import useFirestore from '@/hooks/useFirestore';
 import { checkUniqueId } from '@/utils';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 type PhoneServicesModalPayload =
   | {
@@ -29,17 +33,15 @@ type PhoneServicesModalPayload =
     }
   | {
       mode: "goods";
-      data: string[];
+      data: GoodsAndServicesItem[];
     }
   | {
       mode: "services" | "goods";
       data: null;
 };
 
-const GoodsAndServicesModal = ({data}: {data: string[] | null}) => {
-  const [items, setItems] = useState<string[]>([]);
-  const [newItem, setNewItem] = useState<string>("");
-
+const GoodsAndServicesModal = ({data}: {data: GoodsAndServicesItem[] | null}) => {
+  const [items, setItems] = useState<GoodsAndServicesItem[]>([]);
   const dispatch = useAppDispatch();
 
   const { updatePhoneServicesData } = useFirestore();
@@ -54,37 +56,31 @@ const GoodsAndServicesModal = ({data}: {data: string[] | null}) => {
     setItems(prev => prev.filter((_, i) => i !== index))
   }
 
-  const handleAdd = (item: string) => {
-    if (item.length > 0) {
-      setItems(prev => [...prev, item]);
-      setNewItem("");
-    } else {
-      toast.info("Поле не може бути порожнім!");
-    }
-  }
-
   return(
     <div className='w-[750px]'>
       <DialogHeader className='py-4'>
         <DialogTitle>{"Налаштування товарів та робіт"}</DialogTitle>
-        <DialogDescription className='flex items-center justify-between'>
-          Внесіть зміни
+        <DialogDescription></DialogDescription>
+        <div className="flex gap-2 justify-end">
+          <EditDiaolg trigger={<Button type='button'>Додати</Button>} item={null} setItems={setItems} />
+          
           <ConfirmDialog 
             trigger={<Button variant={"destructive"} type="button">Видалити все</Button>} 
             title='Ви впевнені?'
             description='Скасувати операцію буде неможливо!'
             onConfirm={() => setItems([])}
           />
-        </DialogDescription>
+        </div>
       </DialogHeader>
       <ScrollArea className="h-72 w-full rounded-md border">
         <div className="p-4">
           {items.map((item, i) => (
-            <React.Fragment key={item}>
+            <React.Fragment key={item.id}>
               <div className="text-sm flex items-center justify-between min-w-0">
-                <span className='flex-1 min-w-0 break-all whitespace-normal'>{item}</span>
+                <span className='flex-1 min-w-0 break-all whitespace-normal'>{item.title}</span>
                 <div className="flex gap-2 items-center">
-                  <EditPopover items={items} setItems={setItems} index={i} />
+                  <EditDiaolg trigger={<Pencil className='cursor-pointer' />} item={item} setItems={setItems} />
+                  
                   <X className='cursor-pointer text-chart-5' onClick={() => handleRemove(i)} />
                 </div>
               </div>
@@ -93,18 +89,13 @@ const GoodsAndServicesModal = ({data}: {data: string[] | null}) => {
           ))}
         </div>
       </ScrollArea>
-
-      <div className="py-4 flex gap-2">
-        <Input placeholder='Введіть назву...' value={newItem} onChange={e => setNewItem(e.target.value)} />
-        <Button type='button' onClick={() => handleAdd(newItem)}><Plus/></Button>
-      </div>
       
       <DialogFooter className='mt-4'>
-        <Button type="button" onClick={() => dispatch(closeModal())}>Відмінити</Button>
         <Button type="button" onClick={() => {
           updatePhoneServicesData({action: "goods", items: items});
           dispatch(closeModal());
         }}>Зберегти</Button>
+        <Button type="button" onClick={() => dispatch(closeModal())}>Відмінити</Button>
       </DialogFooter>
     </div>
   )
@@ -112,43 +103,75 @@ const GoodsAndServicesModal = ({data}: {data: string[] | null}) => {
 
 const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
   const { goodsAndServices, servicesItems } = useAppSelector(state => state.services.data.find(item => item.id === "phone-services"))?.data as PhoneServicesData;
-  const [service, setService] = useState<PhoneServiceItem>(
-    data ? data : {
-      id: "",
-      title: "",
-      price: 0,
-      order: null,
-      items: []
-    }
-  );
-  const [nonSelectedItems, setNonselectedItems] = useState<string[]>([]);
+  const [localItem, setLocalItem] = useState<PhoneServiceItem>(data ? data : {
+    id: "",
+    title: "",
+    price: 0,
+    items: [],
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const nonSelectedItems = useMemo(() => {
+    if (!goodsAndServices) return [];
+      const selectedIds = new Set(localItem.items.map(i => i.id));
+      
+      return goodsAndServices
+        .filter(item => !selectedIds.has(item.id))
+        .map(item => ({ id: item.id, title: item.title }));
+    }, [goodsAndServices, localItem.items]);
 
   useEffect(() => {
     if (data) {
-      setService(data);
+      setLocalItem(data);
     }
-    if (goodsAndServices) {
-      setNonselectedItems(goodsAndServices.filter(item => !data?.items.includes(item)));
-    }
-  }, [data, goodsAndServices])
-
-  const moveToSelected = (item: string) => {
-    setNonselectedItems(prev => prev.filter(i => i !== item));
-    setService(prev => ({...prev, items: [...prev.items, item]}));
-  };
-
-  const moveToNonSelected = (item: string) => {
-    setService(prev => ({...prev, items: prev.items.filter(i => i !== item)}));
-    setNonselectedItems(prev => [...prev, item]);
-  };
-
-  const phoneServicesIds = servicesItems.map(item => item.id);
+  }, [data]);
 
   const dispatch = useAppDispatch();
-
   const { updatePhoneServicesData } = useFirestore();
 
-  return(
+  const moveToSelected = (item: BaseServiceItem) => {
+    setLocalItem(prev => ({
+      ...prev, 
+      items: [...prev.items, { id: item.id, title: item.title }]
+    }));
+  };
+
+  const moveToNonSelected = (item: BaseServiceItem) => {
+    setLocalItem(prev => ({
+      ...prev,
+      items: prev.items.filter(i => i.id !== item.id)
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+
+      let newServices;
+      if (!data) {
+        const phoneServicesIds = servicesItems.map(item => item.id);
+        if (!checkUniqueId(localItem.id, phoneServicesIds)) {
+          toast.error("Такий ID вже існує!");
+          setIsLoading(false);
+          return;
+        }
+        newServices = [...servicesItems, localItem];
+      } else {
+        newServices = servicesItems.map(item => item.id === localItem.id ? localItem : item);
+      }
+      await updatePhoneServicesData({ action: "services", items: newServices });
+      
+      toast.success("Дані збережено успішно!");
+      dispatch(closeModal()); 
+    } catch (error) {
+      console.error(error);
+      toast.error("Помилка при збереженні");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
     <div className="w-[750px]">
       <DialogHeader className='py-4'>
         <DialogTitle>
@@ -160,29 +183,29 @@ const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
           Внесіть зміни
         </DialogDescription>
       </DialogHeader>
-
+        
       <div className="flex items-center gap-2">
         <ScrollArea className="h-72 w-full rounded-md border">
-          <div className="p-4">
+          <div className="p-2">
             {nonSelectedItems.map(item => item).map((item) => (
-              <React.Fragment key={item}>
-                <div className="text-sm flex items-center justify-between cursor-pointer" onDoubleClick={() => moveToSelected(item)}>
-                  <span>{item}</span>
-                </div>
-                <Separator className="my-2" />
+              <React.Fragment key={item.id}>
+                  <div className="text-sm flex items-center justify-between cursor-pointer select-none hover:bg-accent py-3 px-1 rounded" onDoubleClick={() => moveToSelected(item)}>
+                    <span>{item.title}</span>
+                  </div>
+                <Separator className="" />
               </React.Fragment>
             ))}
           </div>
         </ScrollArea>
 
         <ScrollArea className="h-72 w-full rounded-md border">
-          <div className="p-4">
-            {service.items.map((item) => (
-              <React.Fragment key={item}>
-                <div className="text-sm flex items-center justify-between cursor-pointer" onDoubleClick={() => moveToNonSelected(item)}>
-                  <span>{item}</span>
+          <div className="p-2">
+            {localItem.items.map((item) => (
+              <React.Fragment key={item.id}>
+                <div className="text-sm flex items-center justify-between cursor-pointer select-none hover:bg-accent py-3 px-1 rounded" onDoubleClick={() => moveToNonSelected(item)}>
+                  <span>{item.title}</span>
                 </div>
-                <Separator className="my-2" />
+                <Separator className="" />
               </React.Fragment>
             ))}
           </div>
@@ -194,40 +217,37 @@ const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
           !data &&
             <div className="flex flex-col">
               <Label htmlFor='id' className='ml-2'>ID:</Label>
-              <Input id="id" placeholder='Введіть ID...' value={service.id} onChange={e => setService({...service, id: e.target.value})} />
+              <Input id="id" placeholder='Введіть ID...' value={localItem.id} onChange={e => setLocalItem(prev => ({...prev, id: e.target.value}))}/>
             </div>
         }
         <div className="flex flex-col">
           <Label htmlFor='title' className='ml-2'>Назва:</Label>
-          <Input id="title" placeholder='Введіть назву...' value={service.title} onChange={e => setService({...service, title: e.target.value})} />
+          <Input id="title" placeholder='Введіть назву...' value={localItem.title} onChange={e => setLocalItem(prev => ({...prev, title: e.target.value}))} />
         </div>
         <div className="flex flex-col">
           <Label htmlFor='price' className='ml-2'>Ціна, грн.:</Label>
-          <Input id='price' placeholder='Введіть ціну в грн...' value={service.price} onChange={e => setService({...service, price: +e.target.value})} />
+          <Input id='price' placeholder='Введіть ціну в грн...' value={localItem.price} onChange={e => setLocalItem(prev => ({...prev, price: +e.target.value}))} />
         </div>
         <div className="flex flex-col">
           <Label htmlFor='order' className='ml-2'>Порядок:</Label>
-          <Input type="number" id='order' placeholder='Введіть порядковий номер...' value={service.order ? service.order : ""} onChange={e => setService({...service, order: e.target.value.length > 0 ? +e.target.value : null})} />
+          <Input type="number" id='order' placeholder='Введіть порядковий номер...' />
         </div>
-        
       </div>
-      
+
       <DialogFooter className='mt-4 '>
+        <Button onClick={handleSave} disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Spinner className="mr-2 h-4 w-4" />
+              Збереження...
+            </>
+          ) : (
+            "Зберегти"
+          )}
+        </Button>
         <Button type="button" onClick={() => dispatch(closeModal())}>Відмінити</Button>
-        <Button type="button" onClick={() => {
-          if (!data) {
-            if (checkUniqueId(service.id, phoneServicesIds ? phoneServicesIds : [])) {
-              const newServices = [...servicesItems, service];
-              updatePhoneServicesData({action: "services", items: newServices});
-              dispatch(closeModal());
-            }
-          } else {
-            const newServices = servicesItems.map(item => item.id === service.id ? service : item);
-            updatePhoneServicesData({action: "services", items: newServices});
-            dispatch(closeModal());
-          }
-        }}>Зберегти</Button>
       </DialogFooter>
+      
     </div>
   )
 }
@@ -240,39 +260,73 @@ export default function PhoneServicesModal() {
   if (payload.mode === "services") return <ServiceModal data={payload.data} />
 }
 
-const EditPopover = ({items, setItems, index}: {
-  items: string[];
-  setItems: React.Dispatch<React.SetStateAction<string[]>>;
-  index: number;
+const EditDiaolg = ({trigger, item, setItems}: {
+  trigger: React.JSX.Element;
+  item: GoodsAndServicesItem | null;
+  setItems: React.Dispatch<React.SetStateAction<GoodsAndServicesItem[]>>;
 }) => {
-  const [value, setValue] = useState(items[index]);
+  const [localItem, setLocalItem] = useState<GoodsAndServicesItem>(item ? item : {
+    id: "",
+    title: "",
+    description: "",
+  });
+  const [open, setOpen] = useState(false);
 
-  const handleEdit = () => {
-    const newItems = [...items];
-    newItems[index] = value;
-    setItems(newItems);
+  useEffect(() => {
+    if (item) {
+      setLocalItem(item)
+    } else {
+      setLocalItem({
+        id: "",
+        title: "",
+        description: "",
+      });
+    }
+  }, [item]);
+
+  const onSave = () => {
+    setItems(prev => {
+      if (item) {
+        return prev.map(el => 
+          el.id === localItem.id ? localItem : el
+        );
+      } else {
+        return [...prev, localItem];
+      }
+    });
+    setOpen(false);
   }
 
-  return(
-    <Popover>
-      <PopoverTrigger asChild>
-        <Pencil />
-      </PopoverTrigger>
-      <PopoverContent className="w-80">
-        <div className="grid gap-4">
-          <div className="space-y-2">
-            <h4 className="leading-none font-medium">Введіть нове значення:</h4>
+  
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{item ? "Внесіть зміни" : "Додайте новий"}</DialogTitle>
+          <DialogDescription>
+            Внесіть зміни
+          </DialogDescription>
+        </DialogHeader>
+        <div className="">
+          <div className="flex flex-col">
+            <Label htmlFor='id' className='ml-2'>ID:</Label>
+            <Input id="id" placeholder='Введіть ID...' value={localItem.id} onChange={e => setLocalItem(prev => ({...prev, id: e.target.value}))} disabled={!!item} />
           </div>
-          <div className="grid gap-2">
-            <Input
-              className='w-full'
-              value={value}
-              onChange={e => setValue(e.target.value)}
-            />
-            <Button type='button' onClick={handleEdit}>Змінити</Button>
+          <div className="flex flex-col">
+            <Label htmlFor='title' className='ml-2'>Назва:</Label>
+            <Input id="title" placeholder='Введіть назву...' value={localItem.title} onChange={e => setLocalItem(prev => ({...prev, title: e.target.value}))} />
+          </div>
+          <div className="flex flex-col">
+            <Label htmlFor='descr' className='ml-2'>Опис:</Label>
+            <Textarea id="descr" placeholder='Введіть опис...' value={localItem.description} onChange={e => setLocalItem(prev => ({...prev, description: e.target.value}))} />
           </div>
         </div>
-      </PopoverContent>
-    </Popover>
+        <DialogFooter>
+          <Button type='button' onClick={onSave}>Зберегти</Button>
+          <Button type='button' onClick={() => setOpen(false)}>Відміна</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

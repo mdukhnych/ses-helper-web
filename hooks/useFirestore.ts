@@ -1,7 +1,7 @@
 import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setEasyproPricelist, setEktaServicesData, setPhoneServicesData, setWarrantyDataStore } from "@/store/slices/servicesSlice";
-import { EasyProPricelistItem, EktaService, EktaServicesDataItem, PhoneService, PhoneServiceItem, PhoneServicesData, WarrantyDataItem } from "@/types/services";
+import { EasyProPricelistItem, EktaService, EktaServicesDataItem, GoodsAndServicesItem, PhoneService, PhoneServiceItem, PhoneServicesData, WarrantyDataItem } from "@/types/services";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { useCallback } from "react";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ type WarrantyActionType = "add" | "update" | "delete";
 type PhoneServicesActionType = 
   | {
     action: "goods";
-    items: string[];
+    items: GoodsAndServicesItem[];
   }
   | {
     action: "services";

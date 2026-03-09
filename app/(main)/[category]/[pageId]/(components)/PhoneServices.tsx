@@ -21,6 +21,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { CircleCheckBig, Minus } from "lucide-react";
@@ -54,9 +63,9 @@ export default function PhoneServices() {
 
     return data.servicesItems.map(service => ({
       ...service,
-      itemsSet: new Set(service.items),
+      itemsSet: new Set(service.items.map(item => item.id)),
     }))
-  }, [data])
+  }, [data]);
 
   if (!data) {
     return (
@@ -120,13 +129,25 @@ export default function PhoneServices() {
 
           <TableBody>
             {data.goodsAndServices.map(item => (
-              <TableRow key={item} className="hover:*:bg-sidebar-accent">
+              <TableRow key={item.id} className="hover:*:bg-sidebar-accent">
                 <TableCell className="sticky left-0 z-10 min-w-[400px] bg-background border-r wrap-break-word whitespace-normal">
-                  {item}
+                  <Popover>
+                    <PopoverTrigger asChild className="cursor-pointer select-none">
+                      <span>{item.title}</span>
+                    </PopoverTrigger>
+                    <PopoverContent align="start">
+                      <PopoverHeader>
+                        <PopoverTitle>{item.title}</PopoverTitle>
+                        <PopoverDescription>
+                          {item.description}
+                        </PopoverDescription>
+                      </PopoverHeader>
+                    </PopoverContent>
+                  </Popover>
                 </TableCell>
                 {servicesWithSet.map(service => (
                   <TableCell key={service.id} className="w-[150px] min-w-[150px] max-w-[150px] text-center border-l">
-                    {service.itemsSet.has(item) ? (
+                    {service.itemsSet.has(item.id) ? (
                       <CircleCheckBig className="inline-block text-green-600" />
                     ) : (
                       <Minus className="inline-block text-muted-foreground" />

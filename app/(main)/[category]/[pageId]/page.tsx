@@ -3,6 +3,7 @@ import WarrantyProtection from './(components)/WarrantyProtection';
 import EasyPro from './(components)/EasyPro';
 import PhoneServices from './(components)/PhoneServices';
 import EktaService from './(components)/EktaService';
+import Instructions from './(components)/Instructions';
 
 export default async function MainPage({
   params,
@@ -15,6 +16,7 @@ export default async function MainPage({
   if (pageId === "easy-pro") return <EasyPro />
   if (pageId === "phone-services") return <PhoneServices />
   if (pageId === "ekta-services") return <EktaService />
+  if (pageId === "instructions") return <Instructions />
 
   return pageId
   

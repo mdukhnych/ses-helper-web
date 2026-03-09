@@ -1,4 +1,4 @@
-interface BaseServiceItem {
+export interface BaseServiceItem {
   id: string;
   title: string;
   order?: number | null;
@@ -43,11 +43,15 @@ interface EasyProService extends BaseServiceItem {
 // Phone Services
 export interface PhoneServiceItem extends BaseServiceItem {
   price: number;
-  items: string[];
+  items: BaseServiceItem[];
+}
+
+export interface GoodsAndServicesItem extends BaseServiceItem {
+  description?: string;
 }
 export interface PhoneServicesData {
   link?: string;
-  goodsAndServices: string[];
+  goodsAndServices: GoodsAndServicesItem[];
   servicesItems: PhoneServiceItem[];
 }
 

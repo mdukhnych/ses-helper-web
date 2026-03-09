@@ -38,11 +38,13 @@ import useAuth from "@/hooks/useAuth";
 import { useAppSelector } from "@/store/hooks";
 import { Spinner } from "./ui/spinner";
 import { Services } from "@/types/services";
+import { Information } from "@/types/information";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { logout } = useAuth();
 
   const services = useAppSelector(state => state.services.data);
+  const information  =useAppSelector(state => state.information);
 
   function sortByOrder(arr: Services) {
     return [...arr].sort((a, b) => {
@@ -78,87 +80,94 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenu>
 
             <Collapsible className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className="cursor-pointer">
-                      <span className="">Сервіси SES</span>
-                      <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
-                      <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {sortByOrder(services).map((subItem, idx) => (
-                        <SidebarMenuSubItem key={idx} className="cursor-pointer">
-                          <SidebarMenuSubButton asChild className="overflow-visible h-auto p-1" >
-                            <Link href={`/services/${subItem.id}`} >{subItem.title}</Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-              <Collapsible className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className="cursor-pointer">
-                      Інформація
-                      <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
-                      <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                        <SidebarMenuSubItem className="cursor-pointer">
-                          <SidebarMenuSubButton asChild className="overflow-visible h-auto p-1" >
-                            <Link href={`/instructions/`}>Інструкції</Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-              <Collapsible className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className="cursor-pointer">
-                      Замовлення
-                      <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
-                      <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                        <SidebarMenuSubItem className="cursor-pointer">
-                          <SidebarMenuSubButton asChild className="overflow-visible h-auto p-1" >
-                            <Link href={`/instructions/`}>Всі</Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-              <Collapsible className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className="cursor-pointer">
-                      Інвентаризація
-                      <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
-                      <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                        <SidebarMenuSubItem className="cursor-pointer">
-                          <SidebarMenuSubButton asChild className="overflow-visible h-auto p-1" >
-                            <Link href={`/instructions/`}>Всі</Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton className="cursor-pointer">
+                    <span className="">Сервіси SES</span>
+                    <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
+                    <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {sortByOrder(services).map((subItem, idx) => (
+                      <SidebarMenuSubItem key={idx} className="cursor-pointer">
+                        <SidebarMenuSubButton asChild className="overflow-visible h-auto p-1" >
+                          <Link href={`/services/${subItem.id}`} >{subItem.title}</Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+
+            <Collapsible className="group/collapsible">
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton className="cursor-pointer">
+                    Інформація
+                    <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
+                    <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                      {
+                        (Object.keys(information.data) as (keyof Information)[]).map((key) => (
+                          <SidebarMenuSubItem key={key} className="cursor-pointer">
+                            <SidebarMenuSubButton asChild className="overflow-visible h-auto p-1">
+                              <Link href={`/information/${key}`}>
+                                {information.data[key].title}
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))
+                      }
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+            <Collapsible className="group/collapsible">
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton className="cursor-pointer">
+                    Замовлення
+                    <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
+                    <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                      <SidebarMenuSubItem className="cursor-pointer">
+                        <SidebarMenuSubButton asChild className="overflow-visible h-auto p-1" >
+                          <Link href={`/instructions/`}>Всі</Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+            <Collapsible className="group/collapsible">
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton className="cursor-pointer">
+                    Інвентаризація
+                    <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
+                    <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                      <SidebarMenuSubItem className="cursor-pointer">
+                        <SidebarMenuSubButton asChild className="overflow-visible h-auto p-1" >
+                          <Link href={`/instructions/`}>Всі</Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
