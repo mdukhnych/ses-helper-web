@@ -138,7 +138,7 @@ export default function PhoneServices() {
                     <PopoverContent align="start">
                       <PopoverHeader>
                         <PopoverTitle>{item.title}</PopoverTitle>
-                        <PopoverDescription>
+                        <PopoverDescription className="" style={{whiteSpace: 'pre-wrap'}}>
                           {item.description}
                         </PopoverDescription>
                       </PopoverHeader>

@@ -92,6 +92,7 @@ export default function WarrantyModal() {
               <Input
                 id="warrabty-id"
                 name="id"
+                required
                 placeholder="Введіть ID послуги..."
                 value={formData.id}
                 onChange={handleChange}

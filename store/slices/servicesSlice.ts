@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { collection, getDocs } from "firebase/firestore";
 import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
-import { EasyProData, EktaService, EktaServicesDataItem, PhoneService, PhoneServicesData, Services, WarrantyDataItem } from "@/types/services";
+import { EasyProData, EasyProPricelistItem, EktaService, EktaServicesDataItem, PhoneService, PhoneServicesData, Services, WarrantyDataItem } from "@/types/services";
 
 export const fetchServices = createAsyncThunk(
   "services/fetchServices",
@@ -15,6 +15,29 @@ export const fetchServices = createAsyncThunk(
     })) as Services;
   }
 );
+
+export const fetchWarrantyData = createAsyncThunk(
+  "services/fetchWarrantyData",
+  async () => {
+    const snapshot = await getDocs(collection(FIREBASE_FIRESTORE, "services/warranty-protection/data"));
+    if (snapshot.empty) throw new Error("Помилка завантаження даних!");
+
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as WarrantyDataItem[];
+  }
+)
+
+export const fetchEasyProPricelist = createAsyncThunk(
+  "services/fetchEasyProPricelist",
+  async () => {
+    const snapshot = await getDocs(collection(FIREBASE_FIRESTORE, "services/easy-pro/pricelist"));
+    if (snapshot.empty) throw new Error("Помилка завантаження даних!");
+
+    return snapshot.docs.map(doc => doc.data()) as EasyProPricelistItem[];
+  }
+)
 
 
 interface IServicesStore {
@@ -41,7 +64,7 @@ const servicesSlice = createSlice({
       if (!service) return;
       service.data = action.payload;
     },
-    setEasyproPricelist: (state, action) => {
+    setEasyproPricelist: (state, action: PayloadAction<EasyProPricelistItem[]>) => {
       const easypro = state.data.find(item => item.id === "easy-pro")?.data as EasyProData;
       if (!easypro) return;
       easypro.pricelist = action.payload;
@@ -70,6 +93,33 @@ const servicesSlice = createSlice({
         state.loading = false;
       })
       .addCase(fetchServices.rejected, (state, action) => {
+        state.error = action.error.message || "Сталася невідома помилка";
+        state.loading = false;
+      })
+      .addCase(fetchWarrantyData.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchWarrantyData.fulfilled, (state, action) => {
+        const service = state.data.find(item => item.id === "warranty-protection");
+        if (!service) return;
+        service.data = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchWarrantyData.rejected, (state, action) => {
+        state.error = action.error.message || "Сталася невідома помилка";
+        state.loading = false;
+      })
+      .addCase(fetchEasyProPricelist.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchEasyProPricelist.fulfilled, (state, action) => {
+        const easypro = state.data.find(item => item.id === "easy-pro")?.data as EasyProData;
+        if (!easypro) return;
+        easypro.pricelist = action.payload;
+      })
+      .addCase(fetchEasyProPricelist.rejected, (state, action) => {
         state.error = action.error.message || "Сталася невідома помилка";
         state.loading = false;
       })

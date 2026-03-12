@@ -2,7 +2,7 @@
 
 import { Card } from '@/components/ui/card';
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Accordion,
   AccordionContent,
@@ -19,10 +19,15 @@ import { formatPrice, textWrapping } from '@/utils';
 import { WarrantyDataItem } from '@/types/services';
 import { openModal } from '@/store/slices/modalSlice';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import { fetchWarrantyData } from '@/store/slices/servicesSlice';
 
 export default function WarrantyProtection() {
   const dispatch = useAppDispatch();
   const [devicePrice, setDevicePrice] = useState('');
+
+  useEffect(() => {
+    dispatch(fetchWarrantyData());
+  }, [dispatch])
 
   const { modifyWarrantyService } = useFirestore();
 
@@ -36,6 +41,15 @@ export default function WarrantyProtection() {
 
   const data = useAppSelector(state => state.services.data.find(item => item.id === "warranty-protection"))?.data as WarrantyDataItem[];
   const role = useAppSelector(state => state.user.role);
+
+  const sortedData = React.useMemo(() => {
+    if (!data) return [];
+    return [...data].sort((a, b) => {
+      const orderA = a.order ?? Infinity;
+      const orderB = b.order ?? Infinity;
+      return orderA - orderB;
+    });
+  }, [data]);
 
   if (!data) return <div className='flex w-full h-full items-center justify-center'><Spinner className='size-16' /></div> 
 
@@ -55,7 +69,7 @@ export default function WarrantyProtection() {
       </div>
       <Accordion type="multiple" className="flex flex-wrap gap-3 items-start mt-5">
         {
-          data.map((item,i) => (
+          sortedData.map((item,i) => (
             <Card
               key={i}
               className="w-full sm:w-[48%] lg:w-[32%] p-0 relative"

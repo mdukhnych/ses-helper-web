@@ -1,11 +1,11 @@
 "use client"
 
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { useAppSelector } from '@/store/hooks'
-import { ListRestart, ListX } from 'lucide-react';
-import React, { useState, useRef } from 'react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { ListRestart, ListX, Sheet } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 
 import useFirestore from '@/hooks/useFirestore';
@@ -22,11 +22,19 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import { fetchEasyProPricelist } from '@/store/slices/servicesSlice';
+import Link from 'next/link';
 
 export default function EasyPro() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  
+  const dispatch = useAppDispatch();
+
+  useEffect(() =>{
+    dispatch(fetchEasyProPricelist());
+  },[dispatch])
 
   const { updateEasyproPricelist } = useFirestore();
 
@@ -34,9 +42,6 @@ export default function EasyPro() {
 
   const data = useAppSelector(state => state.services.data.find(item => item.id === "easy-pro"))?.data as EasyProData;
   if (!data) return <div className="w-full h-full flex items-center justify-center"><Spinner className='size-20' /></div>
-
-  console.log(data.description)
-  console.log(data.pricelist)
 
   const filteredList = data.pricelist.filter(item =>
     item.model.toLowerCase().includes(search.toLowerCase())
@@ -77,8 +82,9 @@ export default function EasyPro() {
         {
           role === "admin" &&
             <>
-              <Button type='button' onClick={() => fileInputRef.current?.click()}><ListRestart/></Button>
-              <ConfirmDialog trigger={<Button disabled={filteredList.length === 0} type='button' variant={"destructive"}><ListX/></Button>} title='Очистити прайсліст?' description='Відмінити операцію буде неможливо!' onConfirm={clearPricelist} />
+              <Link title='Завантажити шаблон таблиці' className={buttonVariants({ variant: "default" })} href='https://firebasestorage.googleapis.com/v0/b/ses-helper-b00aa.firebasestorage.app/o/services%2Fpricelist.xlsx?alt=media&token=09f1d5aa-fd7b-4e69-8a96-5d0f3c72d276'><Sheet/></Link>
+              <Button title='Оновити прайсліст' type='button' onClick={() => fileInputRef.current?.click()}><ListRestart/></Button>
+              <ConfirmDialog trigger={<Button title='Очистити прайсліст' disabled={filteredList.length === 0} type='button' variant={"destructive"}><ListX/></Button>} title='Очистити прайсліст?' description='Відмінити операцію буде неможливо!' onConfirm={clearPricelist} />
               <input type="file" accept=".xlsx, .xls" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
             </>
         }
