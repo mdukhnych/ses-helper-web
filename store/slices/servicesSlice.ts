@@ -29,13 +29,33 @@ export const fetchWarrantyData = createAsyncThunk(
   }
 )
 
-export const fetchEasyProPricelist = createAsyncThunk(
-  "services/fetchEasyProPricelist",
+export const fetchEasyProData = createAsyncThunk(
+  "services/fetchEasyProData",
   async () => {
-    const snapshot = await getDocs(collection(FIREBASE_FIRESTORE, "services/easy-pro/pricelist"));
-    if (snapshot.empty) throw new Error("Помилка завантаження даних!");
+    const [pricelistSnapshot, descriptionSnapshot] = await Promise.all([
+      getDocs(collection(FIREBASE_FIRESTORE, "services", "easy-pro", "pricelist")),
+      getDocs(collection(FIREBASE_FIRESTORE, "services", "easy-pro", "description"))
+    ]);
 
-    return snapshot.docs.map(doc => doc.data()) as EasyProPricelistItem[];
+    return ({
+      description: descriptionSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()})),
+      pricelist: pricelistSnapshot.docs.map(doc => doc.data())
+    }) as EasyProData
+  }
+)
+
+export const fetchPhoneServicesData = createAsyncThunk(
+  "services/fecthPhoneServicesData",
+  async () => {
+    const [goodsAndServicesSnapshot, servicesItemsSnapshot] = await Promise.all([
+      getDocs(collection(FIREBASE_FIRESTORE, "services", "phone-services", "goodsAndServices")),
+      getDocs(collection(FIREBASE_FIRESTORE, "services", "phone-services", "servicesItems"))
+    ]);
+
+    return({
+      goodsAndServices: goodsAndServicesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+      servicesItems: servicesItemsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    }) as PhoneServicesData;
   }
 )
 
@@ -110,16 +130,31 @@ const servicesSlice = createSlice({
         state.error = action.error.message || "Сталася невідома помилка";
         state.loading = false;
       })
-      .addCase(fetchEasyProPricelist.pending, state => {
+      .addCase(fetchEasyProData.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchEasyProPricelist.fulfilled, (state, action) => {
+      .addCase(fetchEasyProData.fulfilled, (state, action) => {
         const easypro = state.data.find(item => item.id === "easy-pro")?.data as EasyProData;
         if (!easypro) return;
-        easypro.pricelist = action.payload;
+        easypro.pricelist = action.payload.pricelist;
+        easypro.description = action.payload.description;
       })
-      .addCase(fetchEasyProPricelist.rejected, (state, action) => {
+      .addCase(fetchEasyProData.rejected, (state, action) => {
+        state.error = action.error.message || "Сталася невідома помилка";
+        state.loading = false;
+      })
+      .addCase(fetchPhoneServicesData.pending, state => {
+        state.loading = true;
+        state.error = null
+      })
+      .addCase(fetchPhoneServicesData.fulfilled, (state, action) => {
+        const store = state.data.find(item => item.id === "phone-services") as PhoneService;
+        if (!store) return;
+        store.data = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchPhoneServicesData.rejected, (state, action) => {
         state.error = action.error.message || "Сталася невідома помилка";
         state.loading = false;
       })

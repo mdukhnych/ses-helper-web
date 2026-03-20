@@ -9,11 +9,11 @@ import { toast } from "sonner";
 type WarrantyActionType = "add" | "update" | "delete";
 type PhoneServicesActionType = 
   | {
-    action: "goods";
+    action: "goodsAndServices";
     items: GoodsAndServicesItem[];
   }
   | {
-    action: "services";
+    action: "servicesItems";
     items: PhoneServiceItem[];
   };
 
@@ -128,12 +128,12 @@ export default function useFirestore() {
   }, [dispatch, store]);
 
   const updatePhoneServicesData = useCallback(async (data: PhoneServicesActionType) => {
+    const currentStore = store.find(item => item.id === "phone-services") as PhoneService;
 
-    if (!store.find(item => item.id === "phone-services")) {
+    if (!currentStore) {
       toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });
       return;
     }
-
     try {
       const ref = doc(FIREBASE_FIRESTORE, "services", "phone-services");
       const snap = await getDoc(ref);
@@ -143,14 +143,26 @@ export default function useFirestore() {
         return;
       }
 
-      const phoneServices = snap.data() as PhoneService;
-      let updatedData: PhoneServicesData = phoneServices.data;
+      const subColRef = collection(ref, data.action);
+
+      const batch = writeBatch(FIREBASE_FIRESTORE);
+      const snapshot = await getDocs(subColRef);
+      snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      data.items.forEach(item => {
+        const newDocRef = doc(subColRef, String(item.id));
+        batch.set(newDocRef, item)
+      });
+      await batch.commit();
+
+      let updatedData: PhoneServicesData = currentStore.data;
 
       switch (data.action) {
-        case "goods":
+        case "goodsAndServices":
           updatedData = { ...updatedData, goodsAndServices: data.items }
           break;
-        case "services":
+        case "servicesItems":
           updatedData = { ...updatedData, servicesItems: data.items }
           break;
         default:
@@ -158,7 +170,6 @@ export default function useFirestore() {
           break;
       }
       dispatch(setPhoneServicesData(updatedData));
-      updateDoc(ref, {data: updatedData});
 
     } catch (error) {
       toast.error("Сталась помилка.");

@@ -57,6 +57,7 @@ export interface PhoneServicesData {
 
 export interface PhoneService extends BaseServiceItem {
   type: 'phone';
+  nextID: number;
   data: PhoneServicesData;
 }
 

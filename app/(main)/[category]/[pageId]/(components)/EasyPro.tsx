@@ -22,7 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
-import { fetchEasyProPricelist } from '@/store/slices/servicesSlice';
+import { fetchEasyProData } from '@/store/slices/servicesSlice';
 import Link from 'next/link';
 
 export default function EasyPro() {
@@ -33,7 +33,7 @@ export default function EasyPro() {
   const dispatch = useAppDispatch();
 
   useEffect(() =>{
-    dispatch(fetchEasyProPricelist());
+    dispatch(fetchEasyProData());
   },[dispatch])
 
   const { updateEasyproPricelist } = useFirestore();

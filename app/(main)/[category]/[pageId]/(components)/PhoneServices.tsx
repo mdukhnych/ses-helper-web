@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 import {
@@ -38,6 +38,7 @@ import { PhoneServiceItem, PhoneServicesData } from "@/types/services";
 import { openModal } from "@/store/slices/modalSlice";
 import useFirestore from "@/hooks/useFirestore";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import { fetchPhoneServicesData } from "@/store/slices/servicesSlice";
 
 function AdminActions({data}: {data: PhoneServicesData}) {
   const dispatch = useAppDispatch();
@@ -58,6 +59,10 @@ export default function PhoneServices() {
 
   const dispatch = useAppDispatch();
 
+  useEffect(() => {
+    dispatch(fetchPhoneServicesData());
+  }, [dispatch])
+
   const servicesWithSet = useMemo(() => {
     if (!data) return []
 
@@ -77,8 +82,19 @@ export default function PhoneServices() {
 
   const handleDeleteService = async (service: PhoneServiceItem) => {
     const updatedServices = data.servicesItems.filter(item => item.id !== service.id);
-    await updatePhoneServicesData({action: "services", items: updatedServices});
+    await updatePhoneServicesData({action: "servicesItems", items: updatedServices});
   }
+
+  const sortedServicesItems = [...data.servicesItems].sort((a, b) => {
+    const orderA = a.order ?? Infinity;
+    const orderB = b.order ?? Infinity;
+
+    if (orderA === orderB) {
+      return a.id.localeCompare(b.id);
+    }
+
+    return orderA - orderB;
+  });
 
   return (
     <div >
@@ -98,11 +114,11 @@ export default function PhoneServices() {
 
           <TableHeader className="bg-sidebar-accent text-base">
             <TableRow> 
-              <TableHead className="sticky left-0 z-20 min-w-[400px] bg-sidebar-accent border-r py-4">
+              <TableHead className="sticky left-0 z-20 min-w-[400px] bg-sidebar-accent border-r-4 py-4">
                 Перелік товарів та робіт
               </TableHead>
 
-              {data.servicesItems.map(service => (
+              {sortedServicesItems.map(service => (
                 <TableHead className="w-[150px] min-w-[150px] max-w-[150px] text-center border-r" key={service.id}>
                   {
                     role === "admin" ?
@@ -111,7 +127,6 @@ export default function PhoneServices() {
                         <DropdownMenuContent>
                           <DropdownMenuItem onClick={() => dispatch(openModal({type: "phone-services", payload: {mode: "services", data: service}}))} >Змінити</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          {/* <AlertDialogDemo trigger={<DropdownMenuItem onSelect={e  => e.preventDefault()}>Видалити</DropdownMenuItem>} title="Видалити сервіс?" description="Ви точно впевнені? Після видалення відновлення не можливе!" submit={() => handleDeleteService(service)} /> */}
                           <ConfirmDialog 
                             trigger={<DropdownMenuItem onSelect={e  => e.preventDefault()}>Видалити</DropdownMenuItem>}
                             title="Видалити сервіс?"
@@ -160,7 +175,7 @@ export default function PhoneServices() {
 
           <TableFooter className="text-base">
             <TableRow>
-              <TableCell className="sticky left-0 z-10 min-w-[400px] bg-sidebar-accent border-r ">Вартість послуг</TableCell>
+              <TableCell className="sticky left-0 z-10 min-w-[400px] bg-sidebar-accent border-r-4 ">Вартість послуг</TableCell>
               {servicesWithSet.map(service => (
                 <TableCell className="w-[150px] min-w-[150px] max-w-[150px] bg-sidebar-accent text-center border-l p-4" key={service.id}>
                   {formatPrice(service.price)}

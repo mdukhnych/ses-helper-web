@@ -60,7 +60,7 @@ const GoodsAndServicesModal = ({data}: {data: GoodsAndServicesItem[] | null}) =>
     <div className='w-[750px]'>
       <DialogHeader className='py-4'>
         <DialogTitle>{"Налаштування товарів та робіт"}</DialogTitle>
-        <DialogDescription></DialogDescription>
+        <DialogDescription>{'Для збереження порядку використовуйте послідовність чисел в полі "ID"'}</DialogDescription>
         <div className="flex gap-2 justify-end">
           <EditDiaolg trigger={<Button type='button'>Додати</Button>} item={null} setItems={setItems} />
           
@@ -92,7 +92,7 @@ const GoodsAndServicesModal = ({data}: {data: GoodsAndServicesItem[] | null}) =>
       
       <DialogFooter className='mt-4'>
         <Button type="button" onClick={() => {
-          updatePhoneServicesData({action: "goods", items: items});
+          updatePhoneServicesData({action: "goodsAndServices", items: items});
           dispatch(closeModal());
         }}>Зберегти</Button>
         <Button type="button" onClick={() => dispatch(closeModal())}>Відмінити</Button>
@@ -107,6 +107,7 @@ const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
     id: "",
     title: "",
     price: 0,
+    order: null,
     items: [],
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -159,7 +160,7 @@ const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
       } else {
         newServices = servicesItems.map(item => item.id === localItem.id ? localItem : item);
       }
-      await updatePhoneServicesData({ action: "services", items: newServices });
+      await updatePhoneServicesData({ action: "servicesItems", items: newServices });
       
       toast.success("Дані збережено успішно!");
       dispatch(closeModal()); 
@@ -230,7 +231,19 @@ const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
         </div>
         <div className="flex flex-col">
           <Label htmlFor='order' className='ml-2'>Порядок:</Label>
-          <Input type="number" id='order' placeholder='Введіть порядковий номер...' />
+          <Input 
+            type="number" 
+            id='order' 
+            placeholder='Введіть порядковий номер...' 
+            value={localItem.order ?? ""} 
+            onChange={e => {
+              const val = e.target.value;
+              setLocalItem(prev => ({
+                ...prev, 
+                order: val === "" ? null : Number(val)
+              }));
+            }}
+          />
         </div>
       </div>
 
