@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { EktaListItem, EktaServicesDataItem } from '@/types/services'
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import {
   Accordion,
@@ -29,6 +29,7 @@ import { formatPrice } from '@/utils';
 import { toast } from 'sonner';
 import useFirebaseStorage from '@/hooks/useFirebaseStorage';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import { fetchEktaServicesData } from '@/store/slices/servicesSlice';
 
 export default function EktaService() {
   const store = useAppSelector(state => state.services.data.find(item => item.id === "ekta-services"))?.data as EktaServicesDataItem[];
@@ -37,6 +38,10 @@ export default function EktaService() {
   const dispatch = useAppDispatch();
   const { updateEktaServicesData } = useFirestore();
   const { deleteFile, deleteFolder } = useFirebaseStorage();
+
+  useEffect(() => {
+    dispatch(fetchEktaServicesData());
+  }, [dispatch])
 
   const onDeleteService = async (item: EktaServicesDataItem) => {
     try {
@@ -121,13 +126,24 @@ export default function EktaService() {
     );
   };
 
+  const sortedItems = [...(store ?? [])].sort((a, b) => {
+    const orderA = a.order ?? Infinity;
+    const orderB = b.order ?? Infinity;
+
+    if (orderA === orderB) {
+      return a.id.localeCompare(b.id);
+    }
+
+    return orderA - orderB;
+  });
+
   if (!store) return <div><Spinner/></div>
   return (
     <div>
       { role === "admin" && <Button className='cursor-pointer' onClick={() => dispatch(openModal({type: "ekta-services", payload: {mode: "services", data: null}}))}>Додати групу</Button> }
       <Accordion type="single" collapsible>
         {
-          store.map((service, i) => (
+          sortedItems.map((service, i) => (
             <Card className='p-0 px-4 my-2' key={service.id}>
               <AccordionItem key={service.id} value={`item-${i}`}>
                 <AccordionTrigger className='cursor-pointer' showChevron={true}>{service.title}</AccordionTrigger>

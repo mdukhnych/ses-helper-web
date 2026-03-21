@@ -1,7 +1,7 @@
 import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setEasyproPricelist, setEktaServicesData, setPhoneServicesData, setWarrantyDataStore } from "@/store/slices/servicesSlice";
-import { EasyProPricelistItem, EktaService, EktaServicesDataItem, GoodsAndServicesItem, PhoneService, PhoneServiceItem, PhoneServicesData, WarrantyDataItem } from "@/types/services";
+import { EasyProPricelistItem, EktaServicesDataItem, GoodsAndServicesItem, PhoneService, PhoneServiceItem, PhoneServicesData, WarrantyDataItem } from "@/types/services";
 import { doc, updateDoc, getDoc, setDoc, deleteDoc, writeBatch, collection, getDocs, DocumentReference, DocumentData } from "firebase/firestore";
 import { useCallback } from "react";
 import { toast } from "sonner";
@@ -179,41 +179,42 @@ export default function useFirestore() {
   }, [dispatch, store]);
 
   const updateEktaServicesData = useCallback(async (data: EktaServicesActionType) => {
-    if (!store.find(item => item.id === "ekta-services")) {
+    const currentStore = store.find(item => item.id === "ekta-services");
+    if (!currentStore) {
       toast.error("Не вдалося знайти поточний сервіс!", { position: "top-center" });
       return;
     }
 
     try {
-      const ref = doc(FIREBASE_FIRESTORE, "services", "ekta-services");
-      const snap = await getDoc(ref);
+      const ref = collection(FIREBASE_FIRESTORE, "services", "ekta-services", "data");
+      const snapshot = await getDocs(ref);
 
-      if (!snap.exists()) {
-        toast.error("Документ не знайдено!", { position: "top-center" });
-        return;
-      }
-
-      const ektaServices = snap.data() as EktaService;
-      let updatedData: EktaServicesDataItem[] = ektaServices.data;
+      let updatedData: EktaServicesDataItem[] = snapshot.docs.map(doc => doc.data() as EktaServicesDataItem);
 
       switch (data.action) {
         case "add":
           updatedData = [...updatedData, data.item]
           break;
         case "update":
-          updatedData = ektaServices.data.map(item => item.id === data.item.id ? data.item : item);
+          updatedData = updatedData.map(item => item.id === data.item.id ? data.item : item);
           break;
         case "delete":
-          
-          updatedData = ektaServices.data.filter(item => item.id !== data.item.id);
+          updatedData = updatedData.filter(item => item.id !== data.item.id);
           break;
         default:
           toast.error("Невідома дія!", { position: "top-center" });
           break;
       }
-
+      const batch = writeBatch(FIREBASE_FIRESTORE);
+        snapshot.docs.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        updatedData.forEach(item => {
+          const newDocRef = doc(ref, String(item.id));
+          batch.set(newDocRef, item)
+        });
+      await batch.commit();
       dispatch(setEktaServicesData(updatedData));
-      updateDoc(ref, {data: updatedData});
 
     } catch (error) {
       toast.error("Сталась помилка.");
