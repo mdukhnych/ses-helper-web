@@ -15,6 +15,7 @@ export default function DynamicBreadcrumb() {
   const pathname = usePathname();
   const segments = pathname.split('/').filter(Boolean);
   const breadcrumbsData = useAppSelector(state => state.breadcrumbs.data);
+  console.log(segments)
 
   return (
     <Breadcrumb>

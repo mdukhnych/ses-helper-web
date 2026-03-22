@@ -4,6 +4,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from '@/firebaseConfug';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchBreadcrumbs } from '@/store/slices/breadcrumbsSlice';
+import { fetchInformation } from '@/store/slices/informationSlice';
 import { fetchServices } from '@/store/slices/servicesSlice';
 import { setUserStore } from '@/store/slices/userSlice';
 import { IUser } from '@/types/user';
@@ -29,6 +30,7 @@ export default function AuthProvider({ children }: {children: React.ReactNode}) 
             dispatch(setUserStore(userData));
             dispatch(fetchBreadcrumbs());
             dispatch(fetchServices());
+            dispatch(fetchInformation());
             setIsLoading(false);
           } else {
             toast('Дані користувача не знайдено', {position: "top-center"});

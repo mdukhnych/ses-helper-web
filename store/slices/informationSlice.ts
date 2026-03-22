@@ -1,24 +1,57 @@
-import { Information } from "@/types/information";
-import { createSlice } from "@reduxjs/toolkit";
+import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
+import { Information, Instructions, InstructionsItem, Motivations } from "@/types/information";
+import { createAsyncThunk, createSlice, isFulfilled, isPending, isRejected } from "@reduxjs/toolkit";
+import { collection, getDocs } from "firebase/firestore";
 
+export const fetchInformation = createAsyncThunk(
+  "information/fetchInformation",
+  async (): Promise<Information> => {
+    const ref = collection(FIREBASE_FIRESTORE, "information");
+    const snapshot = await getDocs(ref);
 
-interface InformationState {
+    const data = Object.fromEntries(
+      snapshot.docs.map(doc => [doc.id, doc.data()])
+    );
+
+    return {
+      instructions: data.instructions as Instructions,
+      motivations: data.motivations as Motivations,
+    };
+  }
+);
+
+export const fetchInstructions = createAsyncThunk(
+  "information/fetchInstructions",
+  async () => {
+    const ref = collection(FIREBASE_FIRESTORE, "information", "instructions", "items");
+    const snapshot = getDocs(ref);
+
+    return (await snapshot).docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as InstructionsItem));
+  }
+)
+
+interface InformationStore {
   loading: boolean;
   error: string | null;
   data: Information;
 }
 
-const initialState: InformationState = {
+const initialState: InformationStore = {
   loading: false,
   error: null,
   data: {
     instructions: {
-      title: "Інструкції",
-      categories:[],
-      items: [],
+      id: "",
+      title: "",
+      categories: [],
+      items: []
     },
     motivations: {
-      title: "Мотивації",
+      id: "",
+      title: "",
       items: [],
     }
   }
@@ -29,6 +62,27 @@ const informationSlice = createSlice({
   initialState,
   reducers: {
 
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchInformation.fulfilled, (state, action) => {
+        state.data = action.payload;
+      })
+      .addCase(fetchInstructions.fulfilled,(state, action) => {
+        state.data.instructions.items = action.payload;
+      })
+      //Universal Matchers
+      .addMatcher(isPending(fetchInformation, fetchInstructions), (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addMatcher(isFulfilled(fetchInformation, fetchInstructions), (state) => {
+        state.loading = false;
+      })
+      .addMatcher(isRejected(fetchInformation, fetchInstructions), (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Сталася невідома помилка";
+      });
   }
 });
 

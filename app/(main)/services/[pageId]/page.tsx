@@ -3,7 +3,7 @@ import WarrantyProtection from './(components)/WarrantyProtection';
 import EasyPro from './(components)/EasyPro';
 import PhoneServices from './(components)/PhoneServices';
 import EktaService from './(components)/EktaService';
-import Instructions from './(components)/Instructions';
+import Instructions from '../../information/[pageId]/(components)/Instructions';
 
 export default async function MainPage({
   params,

@@ -44,7 +44,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { logout } = useAuth();
 
   const services = useAppSelector(state => state.services.data);
-  const information  =useAppSelector(state => state.information);
+  const information  = useAppSelector(state => state.information);
 
   function sortByOrder(arr: Services) {
     return [...arr].sort((a, b) => {
@@ -128,7 +128,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </CollapsibleContent>
               </SidebarMenuItem>
             </Collapsible>
-            <Collapsible className="group/collapsible">
+            {/* <Collapsible className="group/collapsible">
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton className="cursor-pointer">
@@ -147,8 +147,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuSub>
                 </CollapsibleContent>
               </SidebarMenuItem>
-            </Collapsible>
-            <Collapsible className="group/collapsible">
+            </Collapsible> */}
+            
+            {/* <Collapsible className="group/collapsible">
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton className="cursor-pointer">
@@ -167,7 +168,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuSub>
                 </CollapsibleContent>
               </SidebarMenuItem>
-            </Collapsible>
+            </Collapsible> */}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
