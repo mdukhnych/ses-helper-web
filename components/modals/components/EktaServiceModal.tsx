@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   DialogDescription,
@@ -15,10 +15,9 @@ import { Input } from '@/components/ui/input';
 import { closeModal } from '@/store/slices/modalSlice';
 import useFirestore from '@/hooks/useFirestore';
 import { Spinner } from '@/components/ui/spinner';
-import { FileUp, FileX } from 'lucide-react';
 import { checkUniqueId } from '@/utils';
 import useFirebaseStorage from '@/hooks/useFirebaseStorage';
-import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import FileUploader from '@/components/ui/FileUploader';
 
 type EktaServicesModalPayload =
   | {
@@ -103,27 +102,10 @@ const GoodsAndServices = ({service, listItem}: {
   }, [listItem]);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const dispatch = useAppDispatch();
 
   const { updateEktaServicesData } = useFirestore();
   const { uploadFile, deleteFile, loading } = useFirebaseStorage();
-
-  const handleFileSelect = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.type !== "application/pdf") {
-      alert("Only PDF allowed");
-      return;
-    }
-    setSelectedFile(file);
-  };
 
   const onSaveItem = async () => {
     let updatedList: EktaListItem[] = [];
@@ -210,51 +192,17 @@ const GoodsAndServices = ({service, listItem}: {
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <Label htmlFor="descr">Опис:</Label>
-          <Input
-            id="descr"
-            value={selectedFile ? selectedFile.name : localItem.description}
-            readOnly
-            placeholder="Файл опису..."
-          />
-
-          <button
-            type="button"
-            title="Додати файл опису"
-            onClick={handleFileSelect}
-            className="cursor-pointer"
-          >
-            <FileUp />
-          </button>
-          
-          <ConfirmDialog 
-            trigger={
-              <button
-                type="button"
-                title="Видалити файл опису"
-                className="cursor-pointer"
-              >
-                <FileX />
-              </button>
-            } 
-            title='Видалити файл?' 
-            description='Скасувати операцію буде неможливо!'
-            onConfirm={
-              () => {
-                setLocalItem(prev => ({...prev, description: ""}));
-                setSelectedFile(null);
-              }
-            }
-          />
-          <input
-            type="file"
-            accept="application/pdf"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            hidden
-          />
-        </div>
+        <FileUploader
+          accept='application/pdf'
+          allowedExtensions={['PDF']}
+          description={localItem.description}
+          selectedFile={selectedFile}
+          onFileSelect={(file) => setSelectedFile(file)}
+          onClear={() => {
+            setLocalItem(prev => ({ ...prev, description: "" }));
+            setSelectedFile(null);
+          }}
+        />
       </div>
 
       <DialogFooter>

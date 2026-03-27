@@ -1,24 +1,24 @@
-interface Base {
+export interface InformationBase {
   id: string;
   title: string;
 }
 
 //Instructions
-export interface InstructionsItem extends Base {
+export interface InstructionsItem extends InformationBase {
   categoryId: string;
   url?: string;
 }
-export interface Instructions extends Base {
-  categories: Base[];
+export interface Instructions extends InformationBase {
+  categories: InformationBase[];
   items: InstructionsItem[];
 }
 
 
 // Motivations
-interface MotivationsItem extends Base {
+interface MotivationsItem extends InformationBase {
   url?: string;
 }
-export interface Motivations extends Base {
+export interface Motivations extends InformationBase {
   items: MotivationsItem[]
 }
 
