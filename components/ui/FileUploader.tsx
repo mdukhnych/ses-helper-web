@@ -53,7 +53,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
   return (
     <div className="flex flex-col gap-1 w-full">
-      <div className="flex items-center gap-2 ">
+      <div className="flex items-center gap-4 ">
         <Label htmlFor="file-input" className="text-sm font-medium">
           {label}
         </Label>
@@ -72,7 +72,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 hover:bg-secondary rounded-md transition-colors"
+            className="cursor-pointer rounded-md"
             title="Завантажити"
           >
             <FileUp size={20} className="text-primary" />
@@ -83,7 +83,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
               trigger={
                 <button
                   type="button"
-                  className="p-2 hover:bg-destructive/10 rounded-md transition-colors text-destructive"
+                  className="cursor-pointer rounded-md text-destructive"
                   title="Видалити"
                 >
                   <FileX size={20} />
@@ -119,3 +119,32 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 };
 
 export default FileUploader;
+
+
+{/* <div className="flex items-center gap-1">
+          {!(selectedFile || description) ? (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="cursor-pointer rounded-md p-1 hover:bg-secondary transition-colors"
+              title="Завантажити"
+            >
+              <FileUp size={20} className="text-primary" />
+            </button>
+          ) : (
+            <ConfirmDialog
+              trigger={
+                <button
+                  type="button"
+                  className="cursor-pointer rounded-md p-1 text-destructive hover:bg-destructive/10 transition-colors"
+                  title="Видалити"
+                >
+                  <FileX size={20} />
+                </button>
+              }
+              title='Видалити файл?'
+              description='Це дію неможливо буде скасувати.'
+              onConfirm={onClear}
+            />
+          )}
+        </div> */}

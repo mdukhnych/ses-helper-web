@@ -6,7 +6,7 @@ export interface InformationBase {
 //Instructions
 export interface InstructionsItem extends InformationBase {
   categoryId: string;
-  url?: string;
+  url: string;
 }
 export interface Instructions extends InformationBase {
   categories: InformationBase[];

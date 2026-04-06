@@ -1,6 +1,6 @@
 import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
-import { Information, Instructions, InstructionsItem, Motivations } from "@/types/information";
-import { createAsyncThunk, createSlice, isFulfilled, isPending, isRejected } from "@reduxjs/toolkit";
+import { Information, InformationBase, Instructions, InstructionsItem, Motivations } from "@/types/information";
+import { createAsyncThunk, createSlice, isFulfilled, isPending, isRejected, PayloadAction } from "@reduxjs/toolkit";
 import { collection, getDocs } from "firebase/firestore";
 
 export const fetchInformation = createAsyncThunk(
@@ -61,7 +61,34 @@ const informationSlice = createSlice({
   name: "information",
   initialState,
   reducers: {
+    addInstructionToStore: (state, action: PayloadAction<InstructionsItem>) => {
+      if (!state.data.instructions.items) {
+        state.data.instructions.items = [];
+      }
+      state.data.instructions.items.push(action.payload);
+    },
+    // updateInstructionInStore: (state, action: PayloadAction<InstructionsItem>) => {
+    //   const index = state.data.instructions.items.findIndex(
+    //     item => item.id === action.payload.id
+    //   );
 
+    //   if (index !== -1) {
+    //     state.data.instructions.items[index] = action.payload;
+    //   }
+    // },
+    updateInstructionsInStore: (state, action: PayloadAction<InstructionsItem[]>) => {
+      if (!state.data.instructions.items) {
+        state.data.instructions.items = [];
+      }
+      state.data.instructions.items = action.payload;
+    },
+    updateInstructionsCategories: (state, action: PayloadAction<InformationBase[]>) => {
+      if (!state.data.instructions.categories) {
+        state.data.instructions.categories = [];
+      }
+
+      state.data.instructions.categories = [...action.payload];
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -85,5 +112,12 @@ const informationSlice = createSlice({
       });
   }
 });
+
+export const {
+  addInstructionToStore,
+  // updateInstructionInStore,
+  updateInstructionsInStore,
+  updateInstructionsCategories
+} = informationSlice.actions;
 
 export default informationSlice.reducer;

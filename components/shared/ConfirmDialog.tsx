@@ -14,6 +14,8 @@ import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { Loader2 } from "lucide-react";
 
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+
 interface AlertProps {
   trigger: React.ReactNode;
   title: string;
@@ -52,9 +54,16 @@ export default function ConfirmDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          {description && (
+
+          {description ? (
             <AlertDialogDescription>
               {description}
+            </AlertDialogDescription>
+          ) : (
+            <AlertDialogDescription asChild>
+              <VisuallyHidden>
+                Підтвердіть виконання дії
+              </VisuallyHidden>
             </AlertDialogDescription>
           )}
         </AlertDialogHeader>

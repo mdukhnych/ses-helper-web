@@ -25,6 +25,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { CircleCheckBig, Minus, PencilIcon, TrashIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { openModal } from '@/store/slices/modalSlice';
+import useInstructions from '@/hooks/useInstructions';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
 
 export default function Instructions() {
@@ -38,6 +40,8 @@ export default function Instructions() {
   useEffect(() => {
     dispatch(fetchInstructions());
   }, [dispatch]);
+
+  const { deleteInstruction } = useInstructions();
 
   return (
     <div className=''>
@@ -61,7 +65,7 @@ export default function Instructions() {
           </div>
           <div className="flex gap-2 items-center">
             <Label>Пошук:</Label>
-            <Input className='w-[360px]' placeholder='Введіть назві інструкції...' value={search} onChange={e => setSearch(e.target.value)} />
+            <Input className='w-[360px]' placeholder='Введіть назву інструкції...' value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
 
@@ -84,10 +88,10 @@ export default function Instructions() {
             <div className="p-4 border-r">Файл</div>
           </div>
           <div className="flex flex-col">
-            {instructions.items ? (
+            {instructions?.items?.length > 0 ? (
               instructions.items.map((item) => {
                 const rowContent = (
-                  <div className={"grid grid-cols-[6fr_2fr_1fr] hover:bg-muted/50 transition-colors cursor-pointer"}>
+                  <div className={"grid grid-cols-[6fr_2fr_1fr] hover:bg-muted/50 transition-colors cursor-pointer"} onDoubleClick={() => {alert("OPEN")}}>
                     <div className="p-4 border-r flex items-center font-medium">{item.title}</div>
                     <div className="p-4 border-r flex items-center">
                       {instructions.categories.find((i) => i.id === item.categoryId)?.title}
@@ -121,17 +125,27 @@ export default function Instructions() {
                           <PencilIcon />
                           Змінити
                         </ContextMenuItem>
-                        <ContextMenuItem variant="destructive" className="cursor-pointer">
-                          <TrashIcon />
-                          Видалити
-                        </ContextMenuItem>
+                        <ConfirmDialog
+                          title="Видалити?"
+                          onConfirm={() => deleteInstruction(item)}
+                          trigger={
+                            <ContextMenuItem
+                              variant="destructive"
+                              className="cursor-pointer"
+                              onSelect={(e) => e.preventDefault()} // ВАЖЛИВО
+                            >
+                              <TrashIcon />
+                              Видалити
+                            </ContextMenuItem>
+                          }
+                        />
                       </ContextMenuGroup>
                     </ContextMenuContent>
                   </ContextMenu>
                 );
               })
             ) : (
-              <span>Інструкції відсутні</span>
+              <span className='text-center p-6'>Інструкції відсутні</span>
             )}
           </div>
         </ScrollArea>
