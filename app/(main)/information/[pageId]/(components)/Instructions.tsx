@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { openModal } from '@/store/slices/modalSlice';
 import useInstructions from '@/hooks/useInstructions';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import PdfViewer from '@/components/shared/PdfViewer';
 
 
 export default function Instructions() {
@@ -36,12 +37,41 @@ export default function Instructions() {
   const role = useAppSelector(state => state.user.role);
   const [category, setCategory] = useState("all");
   const [search, setSearch] = useState("");
+  const [selectedDoc, setSelectedDoc] = useState<{ url: string, title: string } | null>(null);
 
   useEffect(() => {
     dispatch(fetchInstructions());
   }, [dispatch]);
 
-  const { deleteInstruction } = useInstructions();
+  const { deleteInstruction, clearInstructions } = useInstructions();
+
+  const filteredItems = React.useMemo(() => {
+    if (!instructions.items) return [];
+
+    return instructions.items.filter((item) => {
+      const matchesCategory = category === "all" || item.categoryId === category;
+
+      const matchesSearch = item.title
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [instructions.items, category, search]);
+
+  const onClearInstructions = async () => {
+    await clearInstructions(category);
+  }
+
+  if (selectedDoc) {
+    return (
+      <PdfViewer 
+        url={selectedDoc.url} 
+        title={selectedDoc.title} 
+        onBack={() => setSelectedDoc(null)} 
+      />
+    );
+  }
 
   return (
     <div className=''>
@@ -74,7 +104,12 @@ export default function Instructions() {
             <div className="flex gap-2">
               <Button onClick={() => dispatch(openModal({type: "instructions", payload: {mode: "instruction", data: null}}))}>Додати інструкцію</Button>
               <Button onClick={() => dispatch(openModal({type: "instructions", payload: {mode: "categories", data: null }}))}>Редактор категорій</Button>
-              <Button>Видалити все</Button>
+              <ConfirmDialog 
+                title='Видалити всі інструкції?'
+                description='Скасувати операцію буде неможливо!'
+                trigger={<Button variant={"destructive"} disabled={filteredItems.length <= 0 }>{category === "all" ? "Видалити все" : `Видалити категорію`}</Button>}
+                onConfirm={onClearInstructions}
+              />
             </div>
         }
       </div>
@@ -88,10 +123,10 @@ export default function Instructions() {
             <div className="p-4 border-r">Файл</div>
           </div>
           <div className="flex flex-col">
-            {instructions?.items?.length > 0 ? (
-              instructions.items.map((item) => {
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item) => {
                 const rowContent = (
-                  <div className={"grid grid-cols-[6fr_2fr_1fr] hover:bg-muted/50 transition-colors cursor-pointer"} onDoubleClick={() => {alert("OPEN")}}>
+                  <div className={"grid grid-cols-[6fr_2fr_1fr] hover:bg-muted/50 transition-colors cursor-pointer"} onDoubleClick={() => {if (item.url) setSelectedDoc({ url: item.url, title: item.title })}}>
                     <div className="p-4 border-r flex items-center font-medium">{item.title}</div>
                     <div className="p-4 border-r flex items-center">
                       {instructions.categories.find((i) => i.id === item.categoryId)?.title}
@@ -132,7 +167,7 @@ export default function Instructions() {
                             <ContextMenuItem
                               variant="destructive"
                               className="cursor-pointer"
-                              onSelect={(e) => e.preventDefault()} // ВАЖЛИВО
+                              onSelect={(e) => e.preventDefault()}
                             >
                               <TrashIcon />
                               Видалити
@@ -145,7 +180,18 @@ export default function Instructions() {
                 );
               })
             ) : (
-              <span className='text-center p-6'>Інструкції відсутні</span>
+              <div className="flex flex-col items-center justify-center p-10 text-muted-foreground">
+                <span className="text-lg font-medium">
+                  {search || category !== "all" 
+                    ? "Нічого не знайдено" 
+                    : "Список інструкцій порожній"}
+                </span>
+                <p className="text-sm">
+                  {search || category !== "all"
+                    ? "Спробуйте змінити параметри пошуку або обрати іншу категорію"
+                    : "Додайте першу інструкцію за допомогою кнопки вище"}
+                </p>
+              </div>
             )}
           </div>
         </ScrollArea>

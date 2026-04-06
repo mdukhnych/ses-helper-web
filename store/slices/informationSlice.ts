@@ -67,15 +67,6 @@ const informationSlice = createSlice({
       }
       state.data.instructions.items.push(action.payload);
     },
-    // updateInstructionInStore: (state, action: PayloadAction<InstructionsItem>) => {
-    //   const index = state.data.instructions.items.findIndex(
-    //     item => item.id === action.payload.id
-    //   );
-
-    //   if (index !== -1) {
-    //     state.data.instructions.items[index] = action.payload;
-    //   }
-    // },
     updateInstructionsInStore: (state, action: PayloadAction<InstructionsItem[]>) => {
       if (!state.data.instructions.items) {
         state.data.instructions.items = [];

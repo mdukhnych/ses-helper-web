@@ -1,7 +1,7 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { InformationBase, InstructionsItem } from '@/types/information';
 import React, { useCallback } from 'react';
-import { doc, collection, setDoc, updateDoc, deleteDoc } from "firebase/firestore"; 
+import { doc, collection, setDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch } from "firebase/firestore"; 
 import { FIREBASE_FIRESTORE } from '@/firebaseConfug';
 import { addInstructionToStore, updateInstructionsCategories, updateInstructionsInStore } from '@/store/slices/informationSlice';
 import useFirebaseStorage from './useFirebaseStorage';
@@ -11,7 +11,7 @@ export default function useInstructions() {
   const store = useAppSelector(state => state.information.data.instructions);
   const dispatch = useAppDispatch();
 
-  const { uploadFile, deleteFile } = useFirebaseStorage();
+  const { uploadFile, deleteFile, deleteFolder } = useFirebaseStorage();
 
   const addInstruction = useCallback(async ({item, file, setIsLoading}:{
     item: InstructionsItem;
@@ -88,6 +88,34 @@ export default function useInstructions() {
 
   }, [deleteFile, dispatch, store.items]);
 
+  const clearInstructions = useCallback(async (categoryId?: string) => {
+    try {
+      const collectionRef = collection(FIREBASE_FIRESTORE, 'information', 'instructions', 'items');
+      const q = categoryId && categoryId !== 'all' 
+        ? query(collectionRef, where('categoryId', '==', categoryId))
+        : collectionRef;
+
+      const querySnapshot = await getDocs(q);
+      const batch = writeBatch(FIREBASE_FIRESTORE);
+
+      if (querySnapshot.empty) {
+          console.log('Документів для видалення не знайдено');
+          return;
+      }
+
+      querySnapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      await deleteFolder("gs://ses-helper-b00aa.firebasestorage.app/information/instructions");
+      dispatch(updateInstructionsInStore([]));
+      console.log('Всі документи успішно видалені');
+    } catch (error) {
+      console.error('Помилка при видаленні:', error);
+    }
+  }, [deleteFolder, dispatch]);
+
   const updateCategories = useCallback(async (categories: InformationBase[]) => {
     try {
       const ref = doc(FIREBASE_FIRESTORE, "information", "instructions");
@@ -99,5 +127,5 @@ export default function useInstructions() {
     }
   }, [dispatch]);
 
-  return {addInstruction, deleteInstruction, updateInstruction, updateCategories}
+  return {addInstruction, deleteInstruction, updateInstruction, updateCategories, clearInstructions}
 }

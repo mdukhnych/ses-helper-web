@@ -69,10 +69,6 @@ export default function ConfirmDialog({
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>
-            Скасувати
-          </AlertDialogCancel>
-
           <Button
             variant="destructive"
             onClick={handleConfirm}
@@ -83,6 +79,10 @@ export default function ConfirmDialog({
             )}
             {loading ? "Видаляється..." : "Видалити"}
           </Button>
+
+          <AlertDialogCancel disabled={loading}>
+            Скасувати
+          </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
