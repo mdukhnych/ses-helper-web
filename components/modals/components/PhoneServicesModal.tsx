@@ -10,10 +10,8 @@ import { Separator } from "@/components/ui/separator"
 import { closeModal } from '@/store/slices/modalSlice';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { BaseServiceItem, GoodsAndServicesItem, PhoneServiceItem, PhoneServicesData } from '@/types/services';
+import { AddPhoneServiceItem, BaseServiceItem, GoodsAndServicesItem, PhoneServiceItem, PhoneServicesData } from '@/types/services';
 import { Label } from '@radix-ui/react-label';
-import useFirestore from '@/hooks/useFirestore';
-import { checkUniqueId } from '@/utils';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import {
   Dialog,
@@ -25,6 +23,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import usePhoneServices from '@/hooks/usePhoneServices';
 
 type PhoneServicesModalPayload =
   | {
@@ -44,13 +43,14 @@ const GoodsAndServicesModal = ({data}: {data: GoodsAndServicesItem[] | null}) =>
   const [items, setItems] = useState<GoodsAndServicesItem[]>([]);
   const dispatch = useAppDispatch();
 
-  const { updatePhoneServicesData } = useFirestore();
 
   useEffect(() => {
     if (data) {
       setItems(data)
     }
   }, [data]);
+
+  const { updateGoodsAndServices } = usePhoneServices();
 
   const handleRemove = (index: number) => {
     setItems(prev => prev.filter((_, i) => i !== index))
@@ -65,7 +65,7 @@ const GoodsAndServicesModal = ({data}: {data: GoodsAndServicesItem[] | null}) =>
           <EditDiaolg trigger={<Button type='button'>Додати</Button>} item={null} setItems={setItems} />
           
           <ConfirmDialog 
-            trigger={<Button variant={"destructive"} type="button">Видалити все</Button>} 
+            trigger={<Button disabled={items.length <= 0} variant={"destructive"} type="button">Видалити все</Button>} 
             title='Ви впевнені?'
             description='Скасувати операцію буде неможливо!'
             onConfirm={() => setItems([])}
@@ -91,8 +91,8 @@ const GoodsAndServicesModal = ({data}: {data: GoodsAndServicesItem[] | null}) =>
       </ScrollArea>
       
       <DialogFooter className='mt-4'>
-        <Button type="button" onClick={() => {
-          updatePhoneServicesData({action: "goodsAndServices", items: items});
+        <Button type="button" onClick={async () => {
+          await updateGoodsAndServices(items);
           dispatch(closeModal());
         }}>Зберегти</Button>
         <Button type="button" onClick={() => dispatch(closeModal())}>Відмінити</Button>
@@ -102,13 +102,19 @@ const GoodsAndServicesModal = ({data}: {data: GoodsAndServicesItem[] | null}) =>
 }
 
 const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
-  const { goodsAndServices, servicesItems } = useAppSelector(state => state.services.data.find(item => item.id === "phone-services"))?.data as PhoneServicesData;
-  const [localItem, setLocalItem] = useState<PhoneServiceItem>(data ? data : {
-    id: "",
-    title: "",
-    price: 0,
-    order: null,
-    items: [],
+  const { goodsAndServices } = useAppSelector(state => state.services.data.find(item => item.id === "phone-services"))?.data as PhoneServicesData;
+  const [localItem, setLocalItem] = useState<AddPhoneServiceItem>(() => {
+    if (data) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, ...itemWithoutId } = data;
+      return itemWithoutId;
+    }
+    return {
+      title: "",
+      price: 0,
+      order: null,
+      items: [],
+    };
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -121,14 +127,8 @@ const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
         .map(item => ({ id: item.id, title: item.title }));
     }, [goodsAndServices, localItem.items]);
 
-  useEffect(() => {
-    if (data) {
-      setLocalItem(data);
-    }
-  }, [data]);
-
   const dispatch = useAppDispatch();
-  const { updatePhoneServicesData } = useFirestore();
+  const { addPhoneService, updatePhoneService } = usePhoneServices();
 
   const moveToSelected = (item: BaseServiceItem) => {
     setLocalItem(prev => ({
@@ -148,20 +148,12 @@ const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
     try {
       setIsLoading(true);
 
-      let newServices;
       if (!data) {
-        const phoneServicesIds = servicesItems.map(item => item.id);
-        if (!checkUniqueId(localItem.id, phoneServicesIds)) {
-          toast.error("Такий ID вже існує!");
-          setIsLoading(false);
-          return;
-        }
-        newServices = [...servicesItems, localItem];
+        addPhoneService(localItem);
       } else {
-        newServices = servicesItems.map(item => item.id === localItem.id ? localItem : item);
+        console.log(localItem)
+        updatePhoneService(data.id, localItem);
       }
-      await updatePhoneServicesData({ action: "servicesItems", items: newServices });
-      
       toast.success("Дані збережено успішно!");
       dispatch(closeModal()); 
     } catch (error) {
@@ -214,36 +206,13 @@ const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
       </div>
 
       <div className="py-4 flex gap-2">
-        { 
-          !data &&
-            <div className="flex flex-col">
-              <Label htmlFor='id' className='ml-2'>ID:</Label>
-              <Input id="id" placeholder='Введіть ID...' value={localItem.id} onChange={e => setLocalItem(prev => ({...prev, id: e.target.value}))}/>
-            </div>
-        }
-        <div className="flex flex-col">
+        <div className="flex flex-col flex-2">
           <Label htmlFor='title' className='ml-2'>Назва:</Label>
           <Input id="title" placeholder='Введіть назву...' value={localItem.title} onChange={e => setLocalItem(prev => ({...prev, title: e.target.value}))} />
         </div>
         <div className="flex flex-col">
           <Label htmlFor='price' className='ml-2'>Ціна, грн.:</Label>
           <Input id='price' placeholder='Введіть ціну в грн...' value={localItem.price} onChange={e => setLocalItem(prev => ({...prev, price: +e.target.value}))} />
-        </div>
-        <div className="flex flex-col">
-          <Label htmlFor='order' className='ml-2'>Порядок:</Label>
-          <Input 
-            type="number" 
-            id='order' 
-            placeholder='Введіть порядковий номер...' 
-            value={localItem.order ?? ""} 
-            onChange={e => {
-              const val = e.target.value;
-              setLocalItem(prev => ({
-                ...prev, 
-                order: val === "" ? null : Number(val)
-              }));
-            }}
-          />
         </div>
       </div>
 
@@ -284,18 +253,18 @@ const EditDiaolg = ({trigger, item, setItems}: {
     description: "",
   });
   const [open, setOpen] = useState(false);
-
+ 
   useEffect(() => {
     if (item) {
-      setLocalItem(item)
-    } else {
+      setLocalItem(item);
+    } else if (open) { 
       setLocalItem({
-        id: "",
+        id: crypto.randomUUID(),
         title: "",
-        description: "",
+        description: ""
       });
     }
-  }, [item]);
+  }, [item, open]);
 
   const onSave = () => {
     setItems(prev => {
@@ -310,7 +279,6 @@ const EditDiaolg = ({trigger, item, setItems}: {
     setOpen(false);
   }
 
-  
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -322,10 +290,6 @@ const EditDiaolg = ({trigger, item, setItems}: {
           </DialogDescription>
         </DialogHeader>
         <div className="">
-          <div className="flex flex-col">
-            <Label htmlFor='id' className='ml-2'>ID:</Label>
-            <Input id="id" placeholder='Введіть ID...' value={localItem.id} onChange={e => setLocalItem(prev => ({...prev, id: e.target.value}))} disabled={!!item} />
-          </div>
           <div className="flex flex-col">
             <Label htmlFor='title' className='ml-2'>Назва:</Label>
             <Input id="title" placeholder='Введіть назву...' value={localItem.title} onChange={e => setLocalItem(prev => ({...prev, title: e.target.value}))} />

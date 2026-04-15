@@ -16,25 +16,43 @@ export default function LoginForm() {
   const onFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     login(email, password);
-    
-  }
+  };
 
   return (
     <form className='flex flex-col gap-[10] w-[250px]' onSubmit={onFormSubmit}>
-      <Input type='email' placeholder='Введіть вашу пошту...' value={email} onChange={e => setEmail(e.target.value)} />
-      <div className="relative">
-        <Input type={isPasswordShowing ? "text" : "password"} placeholder='Введіть ваш пароль...' value={password} onChange={e => setPassword(e.target.value)} className='pr-[45px]' />
-        <button 
-          type='button' 
-          className='absolute top-[50%] translate-y-[-50%] right-[10px] cursor-pointer'
+      <Input
+        type='email'
+        placeholder='Введіть вашу пошту...'
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        aria-label='Email'
+        autoComplete='email'
+      />
+
+      <div className='relative'>
+        <Input
+          type={isPasswordShowing ? 'text' : 'password'}
+          placeholder='Введіть ваш пароль...'
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          className='pr-[45px]'
+          aria-label='Password'
+          autoComplete='current-password'
+        />
+
+        <button
+          type='button'
+          className='absolute top-[50%] right-[10px] translate-y-[-50%] cursor-pointer'
           onClick={() => setIsPasswordShowing(prev => !prev)}
+          aria-label={isPasswordShowing ? 'Hide password' : 'Show password'}
         >
-          {
-            isPasswordShowing ? <EyeOff /> : <Eye />
-          }
+          {isPasswordShowing ? <EyeOff /> : <Eye />}
         </button>
       </div>
-      <Button type='submit' className='cursor-pointer'>Вхід</Button>
+
+      <Button type='submit' className='cursor-pointer'>
+        Вхід
+      </Button>
     </form>
-  )
+  );
 }

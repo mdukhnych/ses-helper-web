@@ -1,94 +1,106 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { InformationBase, InstructionsItem } from '@/types/information';
-import React, { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { doc, collection, setDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch } from "firebase/firestore"; 
-import { FIREBASE_FIRESTORE } from '@/firebaseConfug';
+import { FIREBASE_FIRESTORE } from '@/firebaseConfig';
 import { addInstructionToStore, updateInstructionsCategories, updateInstructionsInStore } from '@/store/slices/informationSlice';
 import useFirebaseStorage from './useFirebaseStorage';
 import { toast } from 'sonner';
+import { handleError } from '@/utils';
 
 export default function useInstructions() {
+  const [isLoading, setIsLoading] = useState(false);
   const store = useAppSelector(state => state.information.data.instructions);
   const dispatch = useAppDispatch();
 
   const { uploadFile, deleteFile, deleteFolder } = useFirebaseStorage();
 
-  const addInstruction = useCallback(async ({item, file, setIsLoading}:{
+  // --- Actions ---
+  const addInstruction = useCallback(async ({ item, file }: {
     item: InstructionsItem;
     file: File | null;
-    setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
   }) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const ref = doc(collection(FIREBASE_FIRESTORE, "information", "instructions", "items"));
       let downloadURL: string = "";
 
       if (file) {
-        downloadURL = await uploadFile({path: `/information/instructions/`, file: file});
+        downloadURL = await uploadFile({ path: `/information/instructions/`, file });
       }
-      const newItem = {
-        ...item,
-        id: ref.id,
-        url: downloadURL
-      }
+
+      const newItem = { ...item, id: ref.id, url: downloadURL };
+      
       await setDoc(ref, newItem);
       dispatch(addInstructionToStore(newItem));
+      toast.success("Інструкцію додано");
     } catch (error) {
-      console.error("Помилка при додаванні: ", error);
-      toast.error("Не вдалося додати дані. Спробуйте пізніше.");
+      handleError(error, "Помилка при додаванні");
     } finally {
       setIsLoading(false);
     }
   }, [dispatch, uploadFile]);
 
-  const updateInstruction = useCallback(async ({item, file, setIsLoading}: {
+  const updateInstruction = useCallback(async ({ item, file }: {
     item: InstructionsItem;
     file: File | null;
-    setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
   }) => {
-    try {
-      setIsLoading(true);
-      const ref = doc(FIREBASE_FIRESTORE, "information", "instructions", "items", item.id);
-      let downloadURL: string = item.url;
-      const prevUrl = store.items.find(i => i.id === item.id)?.url ?? "";
+    setIsLoading(true);
+    let newDownloadURL = item.url;
+    let shouldDeleteOldFile = false;
+    const prevUrl = store.items.find(i => i.id === item.id)?.url ?? "";
 
+    try {
       if (file) {
-        if (prevUrl.length > 0) {
-          await deleteFile(prevUrl);
-        }
-        downloadURL = await uploadFile({path: `/information/instructions/`, file: file});
-      } else {
-        await deleteFile(prevUrl);
+        newDownloadURL = await uploadFile({ path: `/information/instructions/`, file });
+        shouldDeleteOldFile = !!prevUrl;
+      } 
+      else if (!item.url && prevUrl) {
+        newDownloadURL = "";
+        shouldDeleteOldFile = true;
       }
+
+      const newItem = { ...item, url: newDownloadURL };
+      const ref = doc(FIREBASE_FIRESTORE, "information", "instructions", "items", item.id);
       
-      const newItem = {
-        ...item,
-        url: downloadURL
-      }
-      await updateDoc(ref, newItem);
-      const newItems: InstructionsItem[] = store.items.map(i => i.id === newItem.id ? newItem : i);
+      await updateDoc(ref, newItem); 
+
+      const newItems = store.items.map(i => i.id === item.id ? newItem : i);
       dispatch(updateInstructionsInStore(newItems));
+
+      if (shouldDeleteOldFile && prevUrl) {
+        await deleteFile(prevUrl).catch(e => console.warn("Старий файл не видалено:", e));
+      }
+
+      toast.success("Дані оновлено!");
     } catch (error) {
-      console.error("Помилка при додаванні: ", error);
-      toast.error("Не вдалося додати дані. Спробуйте пізніше.");
+      handleError(error, "Помилка при оновленні");
     } finally {
       setIsLoading(false);
-      console.log(`Instruction with ID: ${item.id} updated!`);
     }
-  }, [deleteFile, dispatch, store, uploadFile]);
+  }, [deleteFile, dispatch, store.items, uploadFile]);
 
   const deleteInstruction = useCallback(async (item: InstructionsItem) => {
-    if (item.url) {
-      await deleteFile(item.url);
+    setIsLoading(true);
+    try {
+      await deleteDoc(doc(FIREBASE_FIRESTORE, "information", "instructions", "items", item.id));
+
+      if (item.url) {
+        await deleteFile(item.url).catch(e => console.warn("Файл не знайдено в Storage:", e));
+      }
+
+      const newItems = store.items.filter(i => i.id !== item.id);
+      dispatch(updateInstructionsInStore(newItems));
+      toast.success("Видалено успішно");
+    } catch (error) {
+      handleError(error, "Помилка при видаленні");
+    } finally {
+      setIsLoading(false);
     }
-    await deleteDoc(doc(FIREBASE_FIRESTORE, "information", "instructions", "items", item.id));
-    const newItems: InstructionsItem[] = store.items.filter(i => i.id !== item.id);
-
-    dispatch(updateInstructionsInStore(newItems));
-
   }, [deleteFile, dispatch, store.items]);
 
   const clearInstructions = useCallback(async (categoryId?: string) => {
+    setIsLoading(true);
     try {
       const collectionRef = collection(FIREBASE_FIRESTORE, 'information', 'instructions', 'items');
       const q = categoryId && categoryId !== 'all' 
@@ -96,36 +108,49 @@ export default function useInstructions() {
         : collectionRef;
 
       const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) return;
+
       const batch = writeBatch(FIREBASE_FIRESTORE);
-
-      if (querySnapshot.empty) {
-          console.log('Документів для видалення не знайдено');
-          return;
-      }
-
-      querySnapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
+      querySnapshot.docs.forEach((doc) => batch.delete(doc.ref));
 
       await batch.commit();
-      await deleteFolder("gs://ses-helper-b00aa.firebasestorage.app/information/instructions");
-      dispatch(updateInstructionsInStore([]));
-      console.log('Всі документи успішно видалені');
+
+      if (!categoryId || categoryId === 'all') {
+        await deleteFolder("/information/instructions").catch(e => console.warn(e));
+        dispatch(updateInstructionsInStore([]));
+      } else {
+        const remainingItems = store.items.filter(i => i.categoryId !== categoryId);
+        dispatch(updateInstructionsInStore(remainingItems));
+      }
+
+      toast.success('Записи успішно очищені');
     } catch (error) {
-      console.error('Помилка при видаленні:', error);
+      handleError(error, "Помилка при масовому видаленні");
+    } finally {
+      setIsLoading(false);
     }
-  }, [deleteFolder, dispatch]);
+  }, [deleteFolder, dispatch, store.items]);
 
   const updateCategories = useCallback(async (categories: InformationBase[]) => {
+    setIsLoading(true);
     try {
       const ref = doc(FIREBASE_FIRESTORE, "information", "instructions");
       await updateDoc(ref, { categories });
       dispatch(updateInstructionsCategories(categories));
+      toast.success("Категорії оновлено");
     } catch (error) {
-      console.error("Помилка при змінені категорій", error);
-      toast.error("Не вдалося змінити дані в категоріях. Спробуйте пізніше.");
+      handleError(error, "Помилка оновлення категорій");
+    } finally {
+      setIsLoading(false);
     }
   }, [dispatch]);
 
-  return {addInstruction, deleteInstruction, updateInstruction, updateCategories, clearInstructions}
+  return {
+    isLoading,
+    addInstruction, 
+    deleteInstruction, 
+    updateInstruction, 
+    updateCategories, 
+    clearInstructions
+  };
 }

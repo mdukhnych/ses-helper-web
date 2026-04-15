@@ -1,7 +1,7 @@
 'use client'
 
 import { Spinner } from '@/components/ui/spinner';
-import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from '@/firebaseConfug';
+import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from '@/firebaseConfig';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchBreadcrumbs } from '@/store/slices/breadcrumbsSlice';
 import { fetchInformation } from '@/store/slices/informationSlice';

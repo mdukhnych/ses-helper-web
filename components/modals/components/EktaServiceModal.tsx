@@ -8,16 +8,14 @@ import {
 } from "@/components/ui/dialog"
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Button } from '@/components/ui/button';
-import { EktaListItem, EktaServicesDataItem } from '@/types/services';
+import { EktaListItem, EktaServicesDataItem, UpdateEktaGroup } from '@/types/services';
 import { Label } from "@/components/ui/label";
 import { Input } from '@/components/ui/input';
 
 import { closeModal } from '@/store/slices/modalSlice';
-import useFirestore from '@/hooks/useFirestore';
 import { Spinner } from '@/components/ui/spinner';
-import { checkUniqueId } from '@/utils';
-import useFirebaseStorage from '@/hooks/useFirebaseStorage';
 import FileUploader from '@/components/ui/FileUploader';
+import useEktaService from '@/hooks/useEktaService';
 
 type EktaServicesModalPayload =
   | {
@@ -33,25 +31,18 @@ type EktaServicesModalPayload =
 };
 
 const Service = ({data}: {data: EktaServicesDataItem | null}) => {
-  const [item, setItem] = useState<EktaServicesDataItem>(data ? data : {
-    id: "",
-    title: "",
-    order: null,
-    list: []
-  });
+  const [item, setItem] = useState<UpdateEktaGroup>(
+    data 
+      ? { title: data.title, order: data.order, list: data.list }
+      : { title: "", order: null, list: [] }
+  );
 
   useEffect(() => {
     if (data) setItem(data);
   }, [data]);
 
-
   const dispatch = useAppDispatch();
-  const { updateEktaServicesData } = useFirestore();
-
-  const onSaveChanges = async () => {
-    await updateEktaServicesData({action: data ? "update" : "add", item: item});
-    dispatch(closeModal());
-  }
+  const { addEktaGroup, updateEktaGroup } = useEktaService();
 
   return (
     <div className="w-[350px]">
@@ -63,22 +54,14 @@ const Service = ({data}: {data: EktaServicesDataItem | null}) => {
       </DialogHeader>
 
       <div className="py-4 flex flex-col gap-4">
-        <div className="flex flex-col">
-          <Label htmlFor='id' className='ml-2'>ID:</Label>
-          <Input id="id" placeholder='Введіть ID...' disabled={data ? true : false} value={item.id} onChange={e => setItem(prev => ({...prev, id: e.target.value}))}  />
-        </div>
-        <div className="flex flex-2 flex-col">
+        <div className="flex flex-2 flex-col gap-1">
           <Label htmlFor='title' className='ml-2'>Назва сервісу:</Label>
           <Input id="title" placeholder='Введіть назву...' value={item.title} onChange={e => setItem(prev => ({...prev, title: e.target.value}))}  />
         </div>
-        <div className="flex flex-col">
-          <Label htmlFor='order' className='ml-2'>Порядковий номер:</Label>
-          <Input type="number" id='order' placeholder='Введіть порядковий номер...' value={item.order ?? ""} onChange={e => setItem({...item, order: e.target.value.length > 0 ? +e.target.value : null})} />
-        </div>       
       </div>
 
       <DialogFooter>
-        <Button type='button' onClick={onSaveChanges}>Зберегти</Button>
+        <Button type='button' onClick={() => data ? updateEktaGroup(data.id, item) : addEktaGroup(item)}>Зберегти</Button>
         <Button type='button' onClick={() => dispatch(closeModal())}>Відміна</Button>
       </DialogFooter>
     </div>
@@ -104,50 +87,21 @@ const GoodsAndServices = ({service, listItem}: {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const dispatch = useAppDispatch();
 
-  const { updateEktaServicesData } = useFirestore();
-  const { uploadFile, deleteFile, loading } = useFirebaseStorage();
+  const { addEktaItem, updateEktaItem, isLoading } = useEktaService();
 
   const onSaveItem = async () => {
-    let updatedList: EktaListItem[] = [];
-    const ids: string[] = service.list.map(item => item.id);
-
-    if (!listItem) {
-      if (!checkUniqueId(localItem.id, ids)) return;
+    if (listItem) {
+      await updateEktaItem({
+        docId: service.id,
+        newData: localItem,
+        fileData: {
+          prevURL: listItem.description,
+          file: selectedFile
+        }
+      });
+    } else {
+      await addEktaItem({ docId: service.id, item: localItem, file: selectedFile });
     }
-
-    let downloadURL: string | null = null;
-
-    try {
-      if (selectedFile) {
-        downloadURL = await uploadFile({path: `/services/ekta/${service.id}/`, file: selectedFile});
-      }
-
-      if (!localItem.description && listItem?.description) {
-        await deleteFile(listItem.description);
-        downloadURL = null;
-      }
-
-      if (listItem) {
-        updatedList = service.list.map(item =>
-          item.id === localItem.id ? {
-            ...localItem,
-            description: downloadURL ?? "",
-          } : item
-        );
-      } else {
-        
-        updatedList = [...service.list, {
-          ...localItem,
-          description: downloadURL ?? "",
-        }];
-      }
-
-      await updateEktaServicesData({action: "update", item: {...service, list: updatedList}});
-      setSelectedFile(null);
-      dispatch(closeModal());
-    } catch (error) {
-      console.error("Save error:", error);
-    } 
   }
 
   return(
@@ -160,19 +114,15 @@ const GoodsAndServices = ({service, listItem}: {
       </DialogHeader>
 
       <div className="py-4 flex flex-col gap-4">
-        <div className="flex flex-col">
-          <Label htmlFor='id' className='ml-2'>ID:</Label>
-          <Input id="id" placeholder='Введіть ID...' disabled={listItem ? true : false} value={localItem.id} onChange={e => setLocalItem(prev => ({...prev, id: e.target.value}))}  />
-        </div>
-        <div className="flex flex-2 flex-col">
+        <div className="flex flex-2 flex-col gap-1">
           <Label htmlFor='productCode' className='ml-2'>Код товару:</Label>
           <Input id="productCode" placeholder='Введіть код товару...' value={localItem.productCode} onChange={e => setLocalItem(prev => ({...prev, productCode: e.target.value}))}  />
         </div>
-        <div className="flex flex-2 flex-col">
+        <div className="flex flex-2 flex-col gap-1">
           <Label htmlFor='title' className='ml-2'>Назва сервісу:</Label>
           <Input id="title" placeholder='Введіть назву...' value={localItem.title} onChange={e => setLocalItem(prev => ({...prev, title: e.target.value}))}  />
         </div>
-        <div className="flex flex-2 flex-col">
+        <div className="flex flex-2 flex-col gap-1">
           <Label htmlFor='price' className='ml-2'>Ціна:</Label>
           <Input
             id="price"
@@ -208,14 +158,14 @@ const GoodsAndServices = ({service, listItem}: {
       <DialogFooter>
         <Button
           type="button"
-          disabled={loading}
+          disabled={isLoading}
           onClick={onSaveItem}
           className="min-w-[130px]"
         >
-          {loading && <Spinner className="mr-2 h-4 w-4" />}
-          {loading ? "Збереження..." : "Зберегти"}
+          {isLoading && <Spinner className="mr-2 h-4 w-4" />}
+          {isLoading ? "Збереження..." : "Зберегти"}
         </Button>
-        <Button type='button' disabled={loading} onClick={() => dispatch(closeModal())} >Відміна</Button>
+        <Button type='button' disabled={isLoading} onClick={() => dispatch(closeModal())} >Відміна</Button>
       </DialogFooter>
     </div>
   )

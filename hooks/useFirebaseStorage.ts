@@ -1,4 +1,4 @@
-import { FIREBASE_STORAGE } from "@/firebaseConfug";
+import { FIREBASE_STORAGE } from "@/firebaseConfig";
 import { deleteObject, getDownloadURL, listAll, ref, uploadBytes } from "firebase/storage";
 import { useCallback, useState } from "react"
 

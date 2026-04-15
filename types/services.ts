@@ -15,6 +15,8 @@ export interface WarrantyService extends BaseServiceItem {
   data: WarrantyDataItem[];
 }
 
+export type Warranty = Omit<WarrantyDataItem, "id">;
+
 
 // Easy Pro
 interface EasyProDescrItem {
@@ -60,6 +62,8 @@ export interface PhoneService extends BaseServiceItem {
   nextID: number;
   data: PhoneServicesData;
 }
+export type UpdateGoodsAndServiceItem = Omit<GoodsAndServicesItem, 'id'>;
+export type AddPhoneServiceItem = Omit<PhoneServiceItem, 'id'>;
 
 
 // Ekta Serviecs
@@ -76,6 +80,8 @@ export interface EktaService extends BaseServiceItem {
   type: 'ekta';
   data: EktaServicesDataItem[];
 }
+
+export type UpdateEktaGroup = Omit<EktaServicesDataItem, 'id'>;
 
 
 // Root

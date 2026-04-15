@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, isFulfilled, isPending, isRejected, PayloadAction } from "@reduxjs/toolkit";
 import { collection, getDocs } from "firebase/firestore";
-import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
+import { FIREBASE_FIRESTORE } from "@/firebaseConfig";
 import { EasyProData, EasyProPricelistItem, EktaService, EktaServicesDataItem, PhoneService, PhoneServicesData, Services, WarrantyDataItem } from "@/types/services";
 
 export const fetchServices = createAsyncThunk(
@@ -66,11 +66,11 @@ export const fetchEktaServicesData = createAsyncThunk(
     if (snapshot.empty) throw new Error("Помилка завантаження даних!");
 
     return snapshot.docs.map(doc => ({
-      ...doc.data(),
-    })) as EktaServicesDataItem[];
+      id: doc.id,
+      ...doc.data()
+    }) as EktaServicesDataItem)
   }
 );
-
 interface IServicesStore {
   loading: boolean;
   error: string | null;
@@ -100,7 +100,6 @@ const servicesSlice = createSlice({
       if (!easypro) return;
       easypro.pricelist = action.payload;
     },
-
     setPhoneServicesData: (state, action: PayloadAction<PhoneServicesData>) => {
       const phoneServiceStore = state.data.find(item => item.id === "phone-services") as PhoneService;
       if (!phoneServiceStore) return;
@@ -134,6 +133,7 @@ const servicesSlice = createSlice({
         const service = state.data.find(i => i.id === "ekta-services") as EktaService;
         if (service) service.data = action.payload;
       })
+
       //Universal Matchers
       .addMatcher(isPending(fetchServices, fetchWarrantyData, fetchEasyProData, fetchPhoneServicesData, fetchEktaServicesData), (state) => {
         state.loading = true;

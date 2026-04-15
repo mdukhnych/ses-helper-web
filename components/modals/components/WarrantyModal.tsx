@@ -11,21 +11,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '@/components/ui/textarea';
-import useFirestore from '@/hooks/useFirestore';
-import { WarrantyDataItem } from '@/types/services';
+import { Warranty, WarrantyDataItem } from '@/types/services';
 import { Spinner } from '@/components/ui/spinner';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { closeModal } from '@/store/slices/modalSlice';
-import { checkUniqueId } from '@/utils';
+import useWarrantyProtection from '@/hooks/useWarrantyProtection';
 
 
 export default function WarrantyModal() {
   const data = useAppSelector(state => state.modal.payload) as WarrantyDataItem | null;
-  const warrantyItems = useAppSelector(state => state.services.data.find(item => item.id === "warranty-protection"))?.data as WarrantyDataItem[];
-  
   const [loading, setLoading] = useState(false);
-  const defaultFormData: WarrantyDataItem = useMemo(() => ({
-    id: "",
+  const defaultFormData: Warranty = useMemo(() => ({
     title: "",
     price: 0,
     description: ""
@@ -38,9 +34,7 @@ export default function WarrantyModal() {
 
   const dispatch = useAppDispatch();
 
-  const ids = warrantyItems.map(item => item.id);
-  
-  const { modifyWarrantyService } = useFirestore();
+  const { addWarranty, updateWarranty } = useWarrantyProtection();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -61,20 +55,16 @@ export default function WarrantyModal() {
     setLoading(true);
 
     if (data) {
-      await modifyWarrantyService("update", formData);
-      dispatch(closeModal());
+      await updateWarranty(data.id, formData);
       setLoading(false);
     } else {
-      if (checkUniqueId(formData.id, ids ? ids : []))  {
-        await modifyWarrantyService("add", formData);
-        dispatch(closeModal())
-      }
+      await addWarranty(formData);
     }
     setLoading(false);
   }
 
   return (
-    <form onSubmit={onFormSubmitHandler}>
+    <form onSubmit={onFormSubmitHandler} className='w-[350px]'>
       <DialogHeader className='py-4 border-b'>
         <DialogTitle>{data ? "Редактор" : "Додати"}</DialogTitle>
         <DialogDescription>
@@ -85,21 +75,6 @@ export default function WarrantyModal() {
         </DialogDescription>
       </DialogHeader>
       <div className="grid gap-4 py-4">
-        {
-          !data ? 
-            <div className="grid gap-3">
-              <Label htmlFor="warrabty-id">Ідентифікатор послуги (ID):</Label>
-              <Input
-                id="warrabty-id"
-                name="id"
-                required
-                placeholder="Введіть ID послуги..."
-                value={formData.id}
-                onChange={handleChange}
-              />
-            </div>
-          : null
-        }
         <div className="grid gap-3">
           <Label htmlFor="warrabty-title">Назва послуги:</Label>
           <Input
@@ -130,9 +105,6 @@ export default function WarrantyModal() {
             value={formData.description}
             onChange={handleChange}
           />
-          <p className="text-muted-foreground text-sm">
-            {"Використовуйте тег <br> для перенесення рядка."}
-          </p>
         </div>
       </div>
       <DialogFooter className='pt-4 border-t'>

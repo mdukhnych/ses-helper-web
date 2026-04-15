@@ -8,8 +8,7 @@ import { ListRestart, ListX, Sheet } from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 
-import useFirestore from '@/hooks/useFirestore';
-import { formatPrice, textWrapping } from '@/utils';
+import { formatPrice } from '@/utils';
 import { EasyProData, EasyProPricelistItem } from '@/types/services';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -24,10 +23,11 @@ import {
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import { fetchEasyProData } from '@/store/slices/servicesSlice';
 import Link from 'next/link';
+import useEasyPro from '@/hooks/useEasyPro';
 
 export default function EasyPro() {
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   const dispatch = useAppDispatch();
@@ -36,7 +36,7 @@ export default function EasyPro() {
     dispatch(fetchEasyProData());
   },[dispatch])
 
-  const { updateEasyproPricelist } = useFirestore();
+  const { updateEasyproPricelist, isLoading } = useEasyPro();
 
   const role = useAppSelector(state => state.user.role)
 
@@ -62,7 +62,7 @@ export default function EasyPro() {
       const ws = wb.Sheets[wsname];
       const jsonData = XLSX.utils.sheet_to_json(ws, { defval: "" }) as EasyProPricelistItem[];
 
-      updateEasyproPricelist(jsonData, setLoading);
+      updateEasyproPricelist(jsonData);
       e.target.value = "";  
 
     };
@@ -70,7 +70,7 @@ export default function EasyPro() {
   };
 
   const clearPricelist = async () => {
-    updateEasyproPricelist([], setLoading);
+    updateEasyproPricelist([]);
   }
 
   return (
@@ -91,7 +91,7 @@ export default function EasyPro() {
       </div>
 
       {
-        loading 
+        isLoading 
           ? <div className="flex items-center"><Spinner className='size-20' /></div>
           : <div className="flex gap-4 flex-1 overflow-hidden">
               <ScrollArea className='relative border w-full rounded-lg overflow-hidden '>
@@ -103,22 +103,31 @@ export default function EasyPro() {
                   }
                 </div>
                 <div className="flex flex-col">
-                  {filteredList.map((item, i) => (
-                    <div key={i} className="grid grid-cols-[2fr_1fr_1fr_1fr] border-b last:border-b-0 hover:bg-muted/50 transition-colors">
-                      <div className="p-4 border-r flex items-center font-medium">
-                        {item.model}
+                  {
+                    filteredList.length > 0 ? (
+                      filteredList.map((item, i) => (
+                        <div key={i} className="grid grid-cols-[2fr_1fr_1fr_1fr] border-b last:border-b-0 hover:bg-muted/50 transition-colors">
+                          <div className="p-4 border-r flex items-center font-medium">
+                            {item.model}
+                          </div>
+                          <div className="p-4 border-r flex items-center justify-center">
+                            {item.easypro ? formatPrice(item.easypro) : "—"}
+                          </div>
+                          <div className="p-4 border-r flex items-center justify-center">
+                            {item.easypro2 ? formatPrice(item.easypro2) : "—"}
+                          </div>
+                          <div className="p-4 flex items-center justify-center">
+                            {item.easypro3 ? formatPrice(item.easypro3) : "—"}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center p-10 text-muted-foreground">
+                        <span className="text-lg font-medium">Прайсліст порожній</span>
+                        <p className="text-sm">Зверніться до адміністратора для оновлення</p>
                       </div>
-                      <div className="p-4 border-r flex items-center justify-center">
-                        {item.easypro ? formatPrice(item.easypro) : "—"}
-                      </div>
-                      <div className="p-4 border-r flex items-center justify-center">
-                        {item.easypro2 ? formatPrice(item.easypro2) : "—"}
-                      </div>
-                      <div className="p-4 flex items-center justify-center">
-                        {item.easypro3 ? formatPrice(item.easypro3) : "—"}
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  }
                 </div>
               </ScrollArea>
             </div>
@@ -138,7 +147,7 @@ const EPDialog = ({trigger, title, description}: {
       <DialogContent>
         <DialogHeader>
           <DialogTitle className='border-b pb-4'>{title}</DialogTitle>
-          <DialogDescription className='whitespace-pre-wrap'>{textWrapping(description)}</DialogDescription>
+          <DialogDescription className='whitespace-pre-wrap' style={{whiteSpace: "pre-wrap"}}>{description}</DialogDescription>
         </DialogHeader>
       </DialogContent>
     </Dialog>

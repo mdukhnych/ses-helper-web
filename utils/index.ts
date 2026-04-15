@@ -1,5 +1,5 @@
 import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
-import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
+import { FIREBASE_FIRESTORE } from "@/firebaseConfig";
 import { toast } from "sonner";
 
 const currencyFormatter = new Intl.NumberFormat("uk-UA", {
@@ -47,3 +47,9 @@ export async function renameFirestoreDocument({
     console.error("Старий документ не знайдено!");
   }
 }
+
+export const handleError = (error: unknown, customMessage: string) => {
+  console.error(`${customMessage}:`, error);
+  const message = error instanceof Error ? error.message : "Невідома помилка";
+  toast.error(`${customMessage}: ${message}`);
+};

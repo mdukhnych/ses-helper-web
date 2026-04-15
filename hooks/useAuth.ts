@@ -1,4 +1,4 @@
-import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from "@/firebaseConfug";
+import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from "@/firebaseConfig";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchServices, resestServicesStore } from "@/store/slices/servicesSlice";
 import { resetUserStore, setUserStore } from "@/store/slices/userSlice";
@@ -26,24 +26,22 @@ export default function useAuth() {
         router.replace('/');
         toast.success("Авторизація успішна");
       } else {
-        toast.error('Користувача не знайдено', {
-          position: "top-center"
-        });
+        toast.error('Користувача не знайдено');
       }
     })
     .catch((error) => {
       switch (error.code) {
         case "auth/invalid-email":
-          toast.error('Невірно введена пошта', {position: 'top-center'});
+          toast.error('Невірно введена пошта');
           break;
         case "auth/missing-password":
-          toast.error('Введіть пароль', {position: 'top-center'});
+          toast.error('Введіть пароль');
           break;
         case "auth/invalid-credential":
-          toast.error('Користувача не знайдено', {position: 'top-center'});
+          toast.error('Користувача не знайдено');
           break;
         default:
-          toast.error('Щось пішло не так!', {position: 'top-center'});
+          toast.error('Щось пішло не так!');
           break;
       }
     });

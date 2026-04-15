@@ -34,19 +34,26 @@ import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { CircleCheckBig, Minus } from "lucide-react";
 import { formatPrice } from "@/utils";
-import { PhoneServiceItem, PhoneServicesData } from "@/types/services";
+import { PhoneServicesData } from "@/types/services";
 import { openModal } from "@/store/slices/modalSlice";
-import useFirestore from "@/hooks/useFirestore";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { fetchPhoneServicesData } from "@/store/slices/servicesSlice";
+import usePhoneServices from "@/hooks/usePhoneServices";
 
 function AdminActions({data}: {data: PhoneServicesData}) {
   const dispatch = useAppDispatch();
+  const { clearPhoneServices } = usePhoneServices();
 
   return (
     <div className="flex gap-4 pb-4">
       <Button type="button" className="cursor-pointer" onClick={() => dispatch(openModal({type: "phone-services", payload: {mode: "services", data: null}}))}>Сервіси</Button>
       <Button type="button" className="cursor-pointer" onClick={() => dispatch(openModal({type: "phone-services", payload: {mode: "goods", data: data.goodsAndServices}}))}>Послуги / товари</Button>
+      <ConfirmDialog 
+        trigger={<Button type="button" variant={"destructive"} disabled={data.servicesItems.length <= 0}>Видалити всі сервіси</Button>}
+        title="Видалити всі сервіси?"
+        description="Скасувати операцію буде неможливо!"
+        onConfirm={clearPhoneServices}
+      />
     </div>
   )
 }
@@ -55,7 +62,7 @@ export default function PhoneServices() {
   const data = useAppSelector(state => state.services.data.find(item => item.id === "phone-services")?.data as PhoneServicesData);
   const role = useAppSelector(state => state.user.role);
 
-  const { updatePhoneServicesData } = useFirestore();
+  const { deletePhoneService } = usePhoneServices();
 
   const dispatch = useAppDispatch();
 
@@ -78,11 +85,6 @@ export default function PhoneServices() {
         <Spinner className="size-40" />
       </div>
     )
-  }
-
-  const handleDeleteService = async (service: PhoneServiceItem) => {
-    const updatedServices = data.servicesItems.filter(item => item.id !== service.id);
-    await updatePhoneServicesData({action: "servicesItems", items: updatedServices});
   }
 
   const sortedServicesItems = [...data.servicesItems].sort((a, b) => {
@@ -131,7 +133,7 @@ export default function PhoneServices() {
                             trigger={<DropdownMenuItem onSelect={e  => e.preventDefault()}>Видалити</DropdownMenuItem>}
                             title="Видалити сервіс?"
                             description="Скасувати операцію буде неможливо!"
-                            onConfirm={() => handleDeleteService(service)}
+                            onConfirm={() => deletePhoneService(service.id)}
                           />
                         </DropdownMenuContent>
                       </DropdownMenu>

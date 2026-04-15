@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { EktaListItem, EktaServicesDataItem } from '@/types/services'
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   Accordion,
@@ -23,73 +23,36 @@ import {
 } from "@/components/ui/table"
 import { Button } from '@/components/ui/button';
 import { openModal } from '@/store/slices/modalSlice';
-import useFirestore from '@/hooks/useFirestore';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { formatPrice } from '@/utils';
 import { toast } from 'sonner';
-import useFirebaseStorage from '@/hooks/useFirebaseStorage';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import { fetchEktaServicesData } from '@/store/slices/servicesSlice';
+import PdfViewer from '@/components/shared/PdfViewer';
+import useEktaService from '@/hooks/useEktaService';
 
 export default function EktaService() {
   const store = useAppSelector(state => state.services.data.find(item => item.id === "ekta-services"))?.data as EktaServicesDataItem[];
   const role = useAppSelector(state => state.user.role);
+  const [selectedDoc, setSelectedDoc] = useState<{ url: string, title: string } | null>(null);
 
   const dispatch = useAppDispatch();
-  const { updateEktaServicesData } = useFirestore();
-  const { deleteFile, deleteFolder } = useFirebaseStorage();
+
+  const { deleteEktaGroup, deleteEktaItem, clearEktaItems } = useEktaService();
 
   useEffect(() => {
     dispatch(fetchEktaServicesData());
   }, [dispatch])
 
-  const onDeleteService = async (item: EktaServicesDataItem) => {
-    try {
-      await deleteFolder(`/services/ekta/${item.id}`); 
-      await updateEktaServicesData({ action: "delete", item });
-      toast.success(`Група "${item.title}" видалена`, {position: "top-center"});
-    } catch (err) {
-      console.error(err);
-      toast.error("Помилка при видаленні групи", {position: "top-center"});
-    }
-  };
-
-  const onClearService = async (service: EktaServicesDataItem) => {
-    try {
-      await deleteFolder(`/services/ekta/${service.id}`); 
-      await updateEktaServicesData({ action: "update", item: {...service, list: []} });
-      toast.success(`Всі елементи видалено успішно!`, {position: "top-center"});
-    } catch (error) {
-      console.error(error);
-      toast.error("Помилка при видаленні елементів групи", {position: "top-center"});
-    }
-  }
-
-  const onDeleteServiceItem = async ({service, item}: {service: EktaServicesDataItem, item: EktaListItem}) => {
-    try {
-      if (item.description) {
-        await deleteFile(item.description);
-      }
-      await updateEktaServicesData({ action: "update", item: {...service, list: service.list.filter(listItem => listItem.id !== item.id)} });
-      toast.success(`Елемент видалено успішно!`, {position: "top-center"});
-    } catch (error) {
-      console.error(error);
-      toast.error("Помилка при видаленні елементів групи", {position: "top-center"});
-    }
-  }
-
-  const onShowWorkSchedule = (url: string) => {
-    if (url.length === 0) {
-      toast.error("Документ не знайдено!", { position: "top-center" });
-      return;
-    }
-
-    window.open(url, '_blank', 'noreferrer');
-  }
-
   const renderRow = (service: EktaServicesDataItem, item: EktaListItem) => {
     const row = (
-      <TableRow key={item.id} className="select-none cursor-pointer" onDoubleClick={() => onShowWorkSchedule(item.description)}>
+      <TableRow key={item.id} className="select-none cursor-pointer" onDoubleClick={() => {
+        if (item.description) {
+          setSelectedDoc({ url: item.description, title: item.title });
+        } else {
+          toast.error("Файл відсутній!");
+        }
+      }}>
         <TableCell className='w-[100px]'>{item.productCode}</TableCell>
         <TableCell className="font-medium border">
           <div className="flex items-center justify-between">
@@ -119,7 +82,7 @@ export default function EktaService() {
             }
             title={`Видалити ${item.title}?`}
             description='Скасувати операцію буде неможливо!'
-            onConfirm={() => onDeleteServiceItem({service, item})}
+            onConfirm={() => deleteEktaItem(service, item)}
           />
         </ContextMenuContent>
       </ContextMenu>
@@ -138,14 +101,24 @@ export default function EktaService() {
   });
 
   if (!store) return <div><Spinner/></div>
+  if (selectedDoc) {
+    return (
+      <PdfViewer 
+        url={selectedDoc.url} 
+        title={selectedDoc.title} 
+        onBack={() => setSelectedDoc(null)} 
+      />
+    );
+  }
+
   return (
     <div>
       { role === "admin" && <Button className='cursor-pointer' onClick={() => dispatch(openModal({type: "ekta-services", payload: {mode: "services", data: null}}))}>Додати групу</Button> }
       <Accordion type="single" collapsible>
         {
           sortedItems.map((service, i) => (
-            <Card className='p-0 px-4 my-2' key={service.id}>
-              <AccordionItem key={service.id} value={`item-${i}`}>
+            <Card className='p-0 px-4 my-2' key={i}>
+              <AccordionItem value={`item-${i}`}>
                 <AccordionTrigger className='cursor-pointer' showChevron={true}>{service.title}</AccordionTrigger>
                 <AccordionContent className='px-4'>
                   {
@@ -156,14 +129,14 @@ export default function EktaService() {
                            trigger={<Button className='cursor-pointer' type='button'>Видалити групу</Button>} 
                            title={`Видалити групу: ${service.title}?`}
                            description='Скасувати операцію буде неможливо!'
-                           onConfirm={() => onDeleteService(service)}
+                           onConfirm={() => deleteEktaGroup(service.id)}
                         />
                         <Button className='cursor-pointer' type='button' onClick={() => dispatch(openModal({type: "ekta-services", payload: {mode: "goods", data: {service: service, listItem: null}}}))}>Додати елемент</Button>
                         <ConfirmDialog 
                            trigger={<Button disabled={service.list.length === 0} className='cursor-pointer' type='button'>Очистити групу</Button>} 
                            title={`Очистити групу: ${service.title}?`}
                            description='Скасувати операцію буде неможливо!'
-                           onConfirm={() => onClearService(service)}
+                           onConfirm={() => clearEktaItems(service.id)}
                         />
                       </div>
                   }
@@ -174,7 +147,7 @@ export default function EktaService() {
                         <TableRow>
                           <TableHead className="border w-[100px]">Код товару</TableHead>
                           <TableHead className="border">Найменування</TableHead>
-                          <TableHead className="text-right">ціна</TableHead>
+                          <TableHead className="text-right w-[200px]">ціна</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>

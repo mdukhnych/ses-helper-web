@@ -39,16 +39,15 @@ const InstructionInnerModal = ({item}: {item: InstructionsItem | null}) => {
     categoryId: "",
     url: ""
   } );
-  const [isLoading, setIsLoading] = useState(false);
 
-  const { addInstruction, updateInstruction } = useInstructions();
+  const { addInstruction, updateInstruction, isLoading } = useInstructions();
   const dispatch = useAppDispatch();
 
   const onSaveItem = async () => {
     if (item) {
-      await updateInstruction({item: localItem, file: selectedFile, setIsLoading});
+      await updateInstruction({item: localItem, file: selectedFile});
     } else {
-      await addInstruction({item: localItem, file: selectedFile, setIsLoading});
+      await addInstruction({item: localItem, file: selectedFile});
     }
     setSelectedFile(null);
     dispatch(closeModal());

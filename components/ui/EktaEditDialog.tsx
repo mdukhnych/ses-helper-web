@@ -15,7 +15,6 @@ import { Button } from "./button";
 import AlertDialogDemo from "../shared/ConfirmDialog";
 import { FileUp, FileX } from "lucide-react";
 import { checkUniqueId } from "@/utils";
-import { useAppDispatch } from "@/store/hooks";
 
 export default function EktaEditDialog({ trigger, items, currentItem, setItems }: {
   trigger: React.JSX.Element;
@@ -36,10 +35,6 @@ export default function EktaEditDialog({ trigger, items, currentItem, setItems }
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dispatch = useAppDispatch();
-
-
-
 
   useEffect(() => {
     if (isOpen) {
@@ -162,7 +157,7 @@ export default function EktaEditDialog({ trigger, items, currentItem, setItems }
               <AlertDialogDemo 
                 trigger={<Button type="button" variant={"destructive"}>Видалити</Button>} 
                 title='Видалити запис?' 
-                submit={() => {
+                onConfirm={() => {
                   const updatedList = items.filter(item => item.id !== currentItem.id);
                   setItems(prev => ({...prev, list: updatedList}));
                   setIsOpen(false);

@@ -1,4 +1,4 @@
-import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
+import { FIREBASE_FIRESTORE } from "@/firebaseConfig";
 import { Information, InformationBase, Instructions, InstructionsItem, Motivations } from "@/types/information";
 import { createAsyncThunk, createSlice, isFulfilled, isPending, isRejected, PayloadAction } from "@reduxjs/toolkit";
 import { collection, getDocs } from "firebase/firestore";
@@ -106,7 +106,6 @@ const informationSlice = createSlice({
 
 export const {
   addInstructionToStore,
-  // updateInstructionInStore,
   updateInstructionsInStore,
   updateInstructionsCategories
 } = informationSlice.actions;

@@ -12,14 +12,14 @@ import {
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Pencil, Plus, Trash } from 'lucide-react';
+import { ListX, Pencil, Plus, Trash, X } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import useFirestore from '@/hooks/useFirestore';
-import { formatPrice, textWrapping } from '@/utils';
+import { formatPrice } from '@/utils';
 import { WarrantyDataItem } from '@/types/services';
 import { openModal } from '@/store/slices/modalSlice';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import { fetchWarrantyData } from '@/store/slices/servicesSlice';
+import useWarrantyProtection from '@/hooks/useWarrantyProtection';
 
 export default function WarrantyProtection() {
   const dispatch = useAppDispatch();
@@ -29,7 +29,7 @@ export default function WarrantyProtection() {
     dispatch(fetchWarrantyData());
   }, [dispatch])
 
-  const { modifyWarrantyService } = useFirestore();
+  const { deleteWarranty, clearWarrantyData } = useWarrantyProtection();
 
   const addButtonHandler = () => {
     dispatch(openModal({type: 'warranty-protection', payload: null}));
@@ -38,6 +38,13 @@ export default function WarrantyProtection() {
   const editButtonHandler = (item: WarrantyDataItem) => {
     dispatch(openModal({type: "warranty-protection", payload: item}));
   }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^\d*\.?\d*$/.test(value)) {
+      setDevicePrice(value);
+    }
+  };
 
   const data = useAppSelector(state => state.services.data.find(item => item.id === "warranty-protection"))?.data as WarrantyDataItem[];
   const role = useAppSelector(state => state.user.role);
@@ -58,12 +65,40 @@ export default function WarrantyProtection() {
       <div className='flex items-center justify-between border-b pb-5'>
         <div className='flex items-center gap-2 w-[50%] '>
           <span className=''>Вартість:</span>
-          <Input id='devicePrice' placeholder='Введіть вартість пристрою...' type='number' value={devicePrice} onChange={e => setDevicePrice(e.target.value)}/>
+          <div className="relative w-full">
+            <Input
+              id="devicePrice"
+              placeholder="Введіть вартість пристрою..."
+              value={devicePrice}
+              onChange={handleChange}
+              inputMode="decimal"
+              className="pr-10"
+            />
+
+            {devicePrice && (
+              <button
+                type="button"
+                onClick={() => setDevicePrice("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-destructive cursor-pointer" 
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
         </div>
         {
           role === "admin" && 
-            <div>
-              <Button type='button' className='cursor-pointer' onClick={addButtonHandler}><Plus/></Button>
+            <div className='flex gap-2'>
+              <Button type='button' className='cursor-pointer' title='Додати новий елемент' onClick={addButtonHandler}><Plus/></Button>
+              {
+                sortedData.length > 0 &&
+                  <ConfirmDialog 
+                    trigger = {<Button title='Видалити всі елементи' type='button' variant={"destructive"} className='cursor-pointer'><ListX/></Button>}
+                    title = "Видалити всі гарантії?"
+                    description="Скасувати операцію буде неможливо!"
+                    onConfirm={clearWarrantyData}
+                  />
+              }
             </div>
         }
       </div>
@@ -83,10 +118,12 @@ export default function WarrantyProtection() {
                 </AccordionTrigger>
 
                 <AccordionContent className="text-sm leading-relaxed whitespace-pre-wrap relative">
-                  <div className="flex justify-self-end bg-chart-2 p-1 px-2 rounded-bl-lg font-bold text-white">{(item.price * 100).toFixed(0)}%</div>
+                  <div className="flex justify-end">
+                    <span className='bg-chart-2 p-1 px-4 rounded-bl-lg font-bold text-white'>{(item.price * 100).toFixed(0)}%</span>
+                  </div>
 
-                  <div className='p-4 pt-2'>
-                    {textWrapping(item.description) }
+                  <div className='p-4 pt-2' style={{whiteSpace: 'pre-wrap'}}>
+                    { item.description }
                   </div>
                   {
                     role === "admin" ? 
@@ -96,7 +133,7 @@ export default function WarrantyProtection() {
                           trigger={<Button type='button' variant={'destructive'} className='cursor-pointer'><Trash /></Button>} 
                           title='Точно видалити?' 
                           description='Скасувати операцію буде неможливо!'  
-                          onConfirm={() => modifyWarrantyService("delete", item)}
+                          onConfirm={() => deleteWarranty(item.id)}
                         />
                       </div>
                     : null

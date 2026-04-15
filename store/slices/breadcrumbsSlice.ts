@@ -1,4 +1,4 @@
-import { FIREBASE_FIRESTORE } from "@/firebaseConfug";
+import { FIREBASE_FIRESTORE } from "@/firebaseConfig";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { collection, getDocs } from "firebase/firestore";
 
