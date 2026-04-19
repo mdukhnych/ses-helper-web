@@ -109,7 +109,7 @@ export default function Instructions() {
                 title='Видалити всі інструкції?'
                 description='Скасувати операцію буде неможливо!'
                 trigger={<Button variant={"destructive"} disabled={filteredItems.length <= 0 }>{category === "all" ? "Видалити все" : `Видалити категорію`}</Button>}
-                onConfirm={onClearInstructions}
+                onConfirm={async () => {await onClearInstructions()}}
               />
             </div>
         }
@@ -163,7 +163,7 @@ export default function Instructions() {
                         </ContextMenuItem>
                         <ConfirmDialog
                           title="Видалити?"
-                          onConfirm={() => deleteInstruction(item)}
+                          onConfirm={async () => {await deleteInstruction(item)}}
                           trigger={
                             <ContextMenuItem
                               variant="destructive"
