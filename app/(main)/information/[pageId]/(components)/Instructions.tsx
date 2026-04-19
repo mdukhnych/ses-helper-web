@@ -28,6 +28,7 @@ import { openModal } from '@/store/slices/modalSlice';
 import useInstructions from '@/hooks/useInstructions';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import PdfViewer from '@/components/shared/PdfViewer';
+import { toast } from 'sonner';
 
 
 export default function Instructions() {
@@ -126,7 +127,7 @@ export default function Instructions() {
             {filteredItems.length > 0 ? (
               filteredItems.map((item) => {
                 const rowContent = (
-                  <div className={"grid grid-cols-[6fr_2fr_1fr] hover:bg-muted/50 transition-colors cursor-pointer"} onDoubleClick={() => {if (item.url) setSelectedDoc({ url: item.url, title: item.title })}}>
+                  <div className={"grid grid-cols-[6fr_2fr_1fr] hover:bg-muted/50 transition-colors cursor-pointer"} onDoubleClick={() => item.url ? setSelectedDoc({ url: item.url, title: item.title }) : toast("Файл не знайдено!")}>
                     <div className="p-4 border-r flex items-center font-medium">{item.title}</div>
                     <div className="p-4 border-r flex items-center">
                       {instructions.categories.find((i) => i.id === item.categoryId)?.title}

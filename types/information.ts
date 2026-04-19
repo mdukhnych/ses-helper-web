@@ -15,8 +15,8 @@ export interface Instructions extends InformationBase {
 
 
 // Motivations
-interface MotivationsItem extends InformationBase {
-  url?: string;
+export interface MotivationsItem extends InformationBase {
+  url: string;
 }
 export interface Motivations extends InformationBase {
   items: MotivationsItem[]

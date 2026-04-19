@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { InformationBase, InstructionsItem } from '@/types/information';
+import { InformationBase, Instructions, InstructionsItem } from '@/types/information';
 import { useCallback, useState } from 'react';
 import { doc, collection, setDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch } from "firebase/firestore"; 
 import { FIREBASE_FIRESTORE } from '@/firebaseConfig';
@@ -10,7 +10,7 @@ import { handleError } from '@/utils';
 
 export default function useInstructions() {
   const [isLoading, setIsLoading] = useState(false);
-  const store = useAppSelector(state => state.information.data.instructions);
+  const store = useAppSelector(state => state.information.data.instructions) as Instructions | undefined;
   const dispatch = useAppDispatch();
 
   const { uploadFile, deleteFile, deleteFolder } = useFirebaseStorage();
@@ -20,7 +20,9 @@ export default function useInstructions() {
     item: InstructionsItem;
     file: File | null;
   }) => {
+    if (!store) return toast.error("Сервіс не знайдено");
     setIsLoading(true);
+    
     try {
       const ref = doc(collection(FIREBASE_FIRESTORE, "information", "instructions", "items"));
       let downloadURL: string = "";
@@ -39,12 +41,13 @@ export default function useInstructions() {
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch, uploadFile]);
+  }, [dispatch, store, uploadFile]);
 
   const updateInstruction = useCallback(async ({ item, file }: {
     item: InstructionsItem;
     file: File | null;
   }) => {
+    if (!store) return toast.error("Сервіс не знайдено");
     setIsLoading(true);
     let newDownloadURL = item.url;
     let shouldDeleteOldFile = false;
@@ -78,9 +81,10 @@ export default function useInstructions() {
     } finally {
       setIsLoading(false);
     }
-  }, [deleteFile, dispatch, store.items, uploadFile]);
+  }, [deleteFile, dispatch, store, uploadFile]);
 
   const deleteInstruction = useCallback(async (item: InstructionsItem) => {
+    if (!store) return toast.error("Сервіс не знайдено");
     setIsLoading(true);
     try {
       await deleteDoc(doc(FIREBASE_FIRESTORE, "information", "instructions", "items", item.id));
@@ -97,9 +101,10 @@ export default function useInstructions() {
     } finally {
       setIsLoading(false);
     }
-  }, [deleteFile, dispatch, store.items]);
+  }, [deleteFile, dispatch, store]);
 
   const clearInstructions = useCallback(async (categoryId?: string) => {
+    if (!store) return toast.error("Сервіс не знайдено");
     setIsLoading(true);
     try {
       const collectionRef = collection(FIREBASE_FIRESTORE, 'information', 'instructions', 'items');
@@ -129,9 +134,10 @@ export default function useInstructions() {
     } finally {
       setIsLoading(false);
     }
-  }, [deleteFolder, dispatch, store.items]);
+  }, [deleteFolder, dispatch, store]);
 
   const updateCategories = useCallback(async (categories: InformationBase[]) => {
+    if (!store) return toast.error("Сервіс не знайдено");
     setIsLoading(true);
     try {
       const ref = doc(FIREBASE_FIRESTORE, "information", "instructions");
@@ -143,7 +149,7 @@ export default function useInstructions() {
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch]);
+  }, [dispatch, store]);
 
   return {
     isLoading,

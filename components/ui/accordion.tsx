@@ -4,7 +4,11 @@ import * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
 
 import { cn } from "@/lib/utils"
-import { ChevronDownIcon } from "lucide-react"
+import { ChevronDownIcon } from "lucide-react";
+
+interface CustomTriggerProps extends React.ComponentProps<typeof AccordionPrimitive.Trigger> {
+  showChevron?: boolean;
+}
 
 function Accordion({
   ...props
@@ -30,7 +34,7 @@ function AccordionTrigger({
   children,
   showChevron=false,
   ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
+}: CustomTriggerProps) {
   return (
     <AccordionPrimitive.Header className="flex">
       <AccordionPrimitive.Trigger
