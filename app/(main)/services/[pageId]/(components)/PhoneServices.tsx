@@ -4,16 +4,6 @@ import React, { useEffect, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -24,9 +14,6 @@ import {
 import {
   Popover,
   PopoverContent,
-  PopoverDescription,
-  PopoverHeader,
-  PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover"
 
@@ -40,16 +27,30 @@ import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { fetchPhoneServicesData } from "@/store/slices/servicesSlice";
 import usePhoneServices from "@/hooks/usePhoneServices";
 
-function AdminActions({data}: {data: PhoneServicesData}) {
+function AdminActions({ data }: { data: PhoneServicesData }) {
   const dispatch = useAppDispatch();
   const { clearPhoneServices } = usePhoneServices();
 
   return (
     <div className="flex gap-4 pb-4">
-      <Button type="button" className="cursor-pointer" onClick={() => dispatch(openModal({type: "phone-services", payload: {mode: "services", data: null}}))}>Сервіси</Button>
-      <Button type="button" className="cursor-pointer" onClick={() => dispatch(openModal({type: "phone-services", payload: {mode: "goods", data: data.goodsAndServices}}))}>Послуги / товари</Button>
+      <Button 
+        type="button" 
+        onClick={() => dispatch(openModal({ type: "phone-services", payload: { mode: "services", data: null } }))}
+      >
+        Сервіси
+      </Button>
+      <Button 
+        type="button" 
+        onClick={() => dispatch(openModal({ type: "phone-services", payload: { mode: "goods", data: data.goodsAndServices } }))}
+      >
+        Послуги / товари
+      </Button>
       <ConfirmDialog 
-        trigger={<Button type="button" variant={"destructive"} disabled={data.servicesItems.length <= 0}>Видалити всі сервіси</Button>}
+        trigger={
+          <Button type="button" variant="destructive" disabled={data.servicesItems.length <= 0}>
+            Видалити всі сервіси
+          </Button>
+        }
         title="Видалити всі сервіси?"
         description="Скасувати операцію буде неможливо!"
         onConfirm={clearPhoneServices}
@@ -59,134 +60,150 @@ function AdminActions({data}: {data: PhoneServicesData}) {
 }
 
 export default function PhoneServices() {
-  const data = useAppSelector(state => state.services.data.find(item => item.id === "phone-services")?.data as PhoneServicesData);
-  const role = useAppSelector(state => state.user.role);
-
-  const { deletePhoneService } = usePhoneServices();
-
   const dispatch = useAppDispatch();
+  const { deletePhoneService } = usePhoneServices();
+  
+  const rawData = useAppSelector(state => state.services.data.find(item => item.id === "phone-services")?.data);
+  const data = rawData as PhoneServicesData | undefined;
+  const role = useAppSelector(state => state.user.role);
 
   useEffect(() => {
     dispatch(fetchPhoneServicesData());
-  }, [dispatch])
+  }, [dispatch]);
 
-  const servicesWithSet = useMemo(() => {
-    if (!data) return []
+  const sortedServices = useMemo(() => {
+    if (!data?.servicesItems) return [];
+    
+    return [...data.servicesItems]
+      .sort((a, b) => {
+        const orderA = a.order ?? Infinity;
+        const orderB = b.order ?? Infinity;
+        return orderA === orderB ? a.id.localeCompare(b.id) : orderA - orderB;
+      })
+      .map(service => ({
+        ...service,
+        itemsSet: new Set(service.items.map(item => item.id)),
+      }));
+  }, [data?.servicesItems]);
 
-    return data.servicesItems.map(service => ({
-      ...service,
-      itemsSet: new Set(service.items.map(item => item.id)),
-    }))
-  }, [data]);
+  const sortedGoods = useMemo(() => {
+    if (!data?.goodsAndServices) return [];
+    return [...data.goodsAndServices].sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [data?.goodsAndServices]);
 
   if (!data) {
     return (
-      <div className="flex w-full h-full items-center justify-center">
-        <Spinner className="size-40" />
+      <div className="flex w-full h-full items-center justify-center min-h-[400px]">
+        <Spinner className="size-20" />
       </div>
-    )
+    );
   }
 
-  const sortedServicesItems = [...data.servicesItems].sort((a, b) => {
-    const orderA = a.order ?? Infinity;
-    const orderB = b.order ?? Infinity;
-
-    if (orderA === orderB) {
-      return a.id.localeCompare(b.id);
-    }
-
-    return orderA - orderB;
-  });
+  const gridTemplate = `minmax(400px, 1fr) repeat(${sortedServices.length}, 150px)`;
 
   return (
-    <div >
+    <div className="flex flex-col h-[calc(100vh-100px)]">
       {role === "admin" && <AdminActions data={data} />}
-      <div className="relative w-full overflow-auto rounded-md">
-        <Table className="table-fixed w-full border">
-
-          <colgroup>
-            <col style={{ minWidth: 400 }} />
-            {data.servicesItems.map(service => (
-              <col
-                key={service.id}
-                style={{ width: 150, minWidth: 150, maxWidth: 150 }}
-              />
-            ))}
-          </colgroup>
-
-          <TableHeader className="bg-sidebar-accent text-base">
-            <TableRow> 
-              <TableHead className="sticky left-0 z-20 min-w-[400px] bg-sidebar-accent border-r-4 py-4">
-                Перелік товарів та робіт
-              </TableHead>
-
-              {sortedServicesItems.map(service => (
-                <TableHead className="w-[150px] min-w-[150px] max-w-[150px] text-center border-r" key={service.id}>
-                  {
-                    role === "admin" ?
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="cursor-pointer">{service.title}</DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => dispatch(openModal({type: "phone-services", payload: {mode: "services", data: service}}))} >Змінити</DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <ConfirmDialog 
-                            trigger={<DropdownMenuItem onSelect={e  => e.preventDefault()}>Видалити</DropdownMenuItem>}
-                            title="Видалити сервіс?"
-                            description="Скасувати операцію буде неможливо!"
-                            onConfirm={() => deletePhoneService(service.id)}
-                          />
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    : <span>{service.title} </span>
-                  }
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            {data.goodsAndServices.map(item => (
-              <TableRow key={item.id} className="hover:*:bg-sidebar-accent">
-                <TableCell className="sticky left-0 z-10 min-w-[400px] bg-background border-r wrap-break-word whitespace-normal">
-                  <Popover>
-                    <PopoverTrigger asChild className="cursor-pointer select-none">
-                      <span>{item.title}</span>
-                    </PopoverTrigger>
-                    <PopoverContent align="start">
-                      <PopoverHeader>
-                        <PopoverTitle>{item.title}</PopoverTitle>
-                        <PopoverDescription className="" style={{whiteSpace: 'pre-wrap'}}>
-                          {item.description}
-                        </PopoverDescription>
-                      </PopoverHeader>
-                    </PopoverContent>
-                  </Popover>
-                </TableCell>
-                {servicesWithSet.map(service => (
-                  <TableCell key={service.id} className="w-[150px] min-w-[150px] max-w-[150px] text-center border-l">
-                    {service.itemsSet.has(item.id) ? (
-                      <CircleCheckBig className="inline-block text-green-600" />
-                    ) : (
-                      <Minus className="inline-block text-muted-foreground" />
-                    )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-
-          <TableFooter className="text-base">
-            <TableRow>
-              <TableCell className="sticky left-0 z-10 min-w-[400px] bg-sidebar-accent border-r-4 ">Вартість послуг</TableCell>
-              {servicesWithSet.map(service => (
-                <TableCell className="w-[150px] min-w-[150px] max-w-[150px] bg-sidebar-accent text-center border-l p-4" key={service.id}>
-                  {formatPrice(service.price)}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableFooter>
+      
+      <div className="relative flex-1 border rounded-md overflow-auto shadow-sm bg-background">
+        <div className="min-w-full w-fit">
           
-        </Table>
+          <div 
+            className="sticky top-0 z-30 bg-sidebar-accent border-b font-medium text-base shadow-sm"
+            style={{ display: 'grid', gridTemplateColumns: gridTemplate }}
+          >
+            <div className="p-4 border-r sticky left-0 z-40 bg-sidebar-accent">
+              Перелік товарів та робіт
+            </div>
+            {sortedServices.map(service => (
+              <div key={service.id} className="p-4 border-r text-center flex items-center justify-center bg-sidebar-accent">
+                {role === "admin" ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="cursor-pointer hover:underline outline-none">
+                      {service.title}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => dispatch(openModal({ type: "phone-services", payload: { mode: "services", data: service } }))}>
+                        Змінити
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <ConfirmDialog 
+                        trigger={
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                            Видалити
+                          </DropdownMenuItem>
+                        }
+                        title="Видалити сервіс?"
+                        onConfirm={() => deletePhoneService(service.id)}
+                      />
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <span>{service.title}</span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col">
+            {sortedGoods.length > 0 ? (
+              sortedGoods.map(item => (
+                <div 
+                  key={item.id} 
+                  className="grid border-b hover:bg-muted/50 transition-colors group"
+                  style={{ gridTemplateColumns: gridTemplate }}
+                >
+                  <div className="p-4 border-r sticky left-0 z-10 bg-background group-hover:bg-muted/50 font-medium overflow-hidden">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <span className="cursor-pointer hover:text-primary transition-colors block truncate w-full text-left">
+                          {item.title}
+                        </span>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-80">
+                        <div className="space-y-2">
+                          <h4 className="font-medium leading-none">{item.title}</h4>
+                          <p className="text-sm whitespace-pre-wrap">
+                            {item.description || "Опис відсутній"}
+                          </p>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  {sortedServices.map(service => (
+                    <div key={`${item.id}-${service.id}`} className="p-4 border-r flex items-center justify-center">
+                      {service.itemsSet.has(item.id) ? (
+                        <CircleCheckBig className="text-green-600 size-5" />
+                      ) : (
+                        <Minus className="text-muted-foreground/40 size-5" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))
+            ) : (
+              <div className="p-10 text-center text-muted-foreground bg-background">
+                Список товарів порожній
+              </div>
+            )}
+          </div>
+
+          <div 
+            className="sticky bottom-0 z-30 bg-sidebar-accent border-t font-semibold shadow-[0_-2px_4px_rgba(0,0,0,0.05)]"
+            style={{ display: 'grid', gridTemplateColumns: gridTemplate }}
+          >
+            <div className="p-4 border-r sticky left-0 z-40 bg-sidebar-accent uppercase text-xs text-muted-foreground flex items-center">
+              Вартість послуг
+            </div>
+            {sortedServices.map(service => (
+              <div key={`footer-${service.id}`} className="p-4 border-r text-center flex items-center justify-center bg-sidebar-accent">
+                {formatPrice(service.price)}
+              </div>
+            ))}
+          </div>
+
+        </div>
       </div>
     </div>
   )

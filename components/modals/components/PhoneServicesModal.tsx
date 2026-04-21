@@ -43,7 +43,6 @@ const GoodsAndServicesModal = ({data}: {data: GoodsAndServicesItem[] | null}) =>
   const [items, setItems] = useState<GoodsAndServicesItem[]>([]);
   const dispatch = useAppDispatch();
 
-
   useEffect(() => {
     if (data) {
       setItems(data)
@@ -56,37 +55,47 @@ const GoodsAndServicesModal = ({data}: {data: GoodsAndServicesItem[] | null}) =>
     setItems(prev => prev.filter((_, i) => i !== index))
   }
 
+  const getNextOrder = (currentItems: GoodsAndServicesItem[]) => {
+    if (currentItems.length === 0) return 1;
+    const maxOrder = Math.max(...currentItems.map(item => item.order || 0));
+    return maxOrder + 1;
+  };
+
   return(
     <div className='w-[750px]'>
       <DialogHeader className='py-4'>
         <DialogTitle>{"Налаштування товарів та робіт"}</DialogTitle>
         <DialogDescription>{'Для збереження порядку використовуйте послідовність чисел в полі "ID"'}</DialogDescription>
         <div className="flex gap-2 justify-end">
-          <EditDiaolg trigger={<Button type='button'>Додати</Button>} item={null} setItems={setItems} />
+          <EditDiaolg trigger={<Button type='button'>Додати</Button>} item={null} setItems={setItems} nextOrder={getNextOrder(items)} />
           
           <ConfirmDialog 
             trigger={<Button disabled={items.length <= 0} variant={"destructive"} type="button">Видалити все</Button>} 
             title='Ви впевнені?'
             description='Скасувати операцію буде неможливо!'
             onConfirm={() => setItems([])}
+            
           />
         </div>
       </DialogHeader>
       <ScrollArea className="h-72 w-full rounded-md border">
         <div className="p-4">
-          {items.map((item, i) => (
-            <React.Fragment key={item.id}>
-              <div className="text-sm flex items-center justify-between min-w-0">
-                <span className='flex-1 min-w-0 break-all whitespace-normal'>{item.title}</span>
-                <div className="flex gap-2 items-center">
-                  <EditDiaolg trigger={<Pencil className='cursor-pointer' />} item={item} setItems={setItems} />
-                  
-                  <X className='cursor-pointer text-chart-5' onClick={() => handleRemove(i)} />
+          {items
+            .slice()
+            .sort((a, b) => (a.order || 0) - (b.order || 0))
+            .map((item, i) => (
+              <React.Fragment key={item.id}>
+                <div className="text-sm flex items-center justify-between min-w-0">
+                  <span className='flex-1 min-w-0 break-all whitespace-normal'>{item.title}</span>
+                  <div className="flex gap-2 items-center">
+                    <EditDiaolg trigger={<Pencil className='cursor-pointer' />} item={item} setItems={setItems} />
+                    
+                    <X className='cursor-pointer text-chart-5' onClick={() => handleRemove(i)} />
+                  </div>
                 </div>
-              </div>
-              <Separator className="my-2" />
-            </React.Fragment>
-          ))}
+                <Separator className="my-2" />
+              </React.Fragment>
+            ))}
         </div>
       </ScrollArea>
       
@@ -112,7 +121,7 @@ const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
     return {
       title: "",
       price: 0,
-      order: null,
+      order: 1,
       items: [],
     };
   });
@@ -124,7 +133,7 @@ const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
       
       return goodsAndServices
         .filter(item => !selectedIds.has(item.id))
-        .map(item => ({ id: item.id, title: item.title }));
+        .map(item => ({ id: item.id, title: item.title, order: item.order }));
     }, [goodsAndServices, localItem.items]);
 
   const dispatch = useAppDispatch();
@@ -149,7 +158,7 @@ const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
       setIsLoading(true);
 
       if (!data) {
-        addPhoneService(localItem);
+        addPhoneService({...localItem, order: Date.now()});
       } else {
         console.log(localItem)
         updatePhoneService(data.id, localItem);
@@ -180,7 +189,10 @@ const ServiceModal = ({data}: {data: PhoneServiceItem | null}) => {
       <div className="flex items-center gap-2">
         <ScrollArea className="h-72 w-full rounded-md border">
           <div className="p-2">
-            {nonSelectedItems.map(item => item).map((item) => (
+            {nonSelectedItems
+              .slice()
+              .sort((a, b) => (a.order || 0) - (b.order || 0))
+              .map(item => item).map((item) => (
               <React.Fragment key={item.id}>
                   <div className="text-sm flex items-center justify-between cursor-pointer select-none hover:bg-accent py-3 px-1 rounded" onDoubleClick={() => moveToSelected(item)}>
                     <span>{item.title}</span>
@@ -242,15 +254,17 @@ export default function PhoneServicesModal() {
   if (payload.mode === "services") return <ServiceModal data={payload.data} />
 }
 
-const EditDiaolg = ({trigger, item, setItems}: {
+const EditDiaolg = ({trigger, item, nextOrder, setItems}: {
   trigger: React.JSX.Element;
   item: GoodsAndServicesItem | null;
+  nextOrder?: number;
   setItems: React.Dispatch<React.SetStateAction<GoodsAndServicesItem[]>>;
 }) => {
   const [localItem, setLocalItem] = useState<GoodsAndServicesItem>(item ? item : {
     id: "",
     title: "",
     description: "",
+    order: 1
   });
   const [open, setOpen] = useState(false);
  
@@ -261,7 +275,8 @@ const EditDiaolg = ({trigger, item, setItems}: {
       setLocalItem({
         id: crypto.randomUUID(),
         title: "",
-        description: ""
+        description: "",
+        order: 1,
       });
     }
   }, [item, open]);
@@ -273,7 +288,7 @@ const EditDiaolg = ({trigger, item, setItems}: {
           el.id === localItem.id ? localItem : el
         );
       } else {
-        return [...prev, localItem];
+        return [...prev, {...localItem, order: nextOrder}];
       }
     });
     setOpen(false);
@@ -282,7 +297,7 @@ const EditDiaolg = ({trigger, item, setItems}: {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent>
+      <DialogContent onCloseAutoFocus={e => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>{item ? "Внесіть зміни" : "Додайте новий"}</DialogTitle>
           <DialogDescription>

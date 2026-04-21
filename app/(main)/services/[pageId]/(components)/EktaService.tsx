@@ -46,16 +46,19 @@ export default function EktaService() {
 
   const renderRow = (service: EktaServicesDataItem, item: EktaListItem) => {
     const row = (
-      <TableRow key={item.id} className="select-none cursor-pointer" onDoubleClick={() => {
-        if (item.description) {
-          setSelectedDoc({ url: item.description, title: item.title });
-        } else {
-          toast.error("Файл відсутній!");
-        }
-      }}>
+      <TableRow key={item.id}>
         <TableCell className='w-[100px]'>{item.productCode}</TableCell>
         <TableCell className="font-medium border">
-          <div className="flex items-center justify-between">
+          <div 
+            className="flex items-center justify-between select-none cursor-pointer"
+            onDoubleClick={() => {
+              if (item.description) {
+                setSelectedDoc({ url: item.description, title: item.title });
+              } else {
+                toast.error("Файл відсутній!");
+              }
+            }}
+          >
             {item.title}
           </div>
         </TableCell>
