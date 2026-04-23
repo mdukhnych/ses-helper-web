@@ -16,16 +16,17 @@ import { Spinner } from '@/components/ui/spinner';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { closeModal } from '@/store/slices/modalSlice';
 import useWarrantyProtection from '@/hooks/useWarrantyProtection';
-
+import FileUploader from '@/components/ui/FileUploader';
 
 export default function WarrantyModal() {
   const data = useAppSelector(state => state.modal.payload) as WarrantyDataItem | null;
-  const [loading, setLoading] = useState(false);
   const defaultFormData: Warranty = useMemo(() => ({
     title: "",
     price: 0,
-    description: ""
+    description: "",
+    fileURL: ""
   }), []);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [formData, setFormData] = useState(defaultFormData);
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function WarrantyModal() {
 
   const dispatch = useAppDispatch();
 
-  const { addWarranty, updateWarranty } = useWarrantyProtection();
+  const { addWarranty, updateWarranty, isLoading } = useWarrantyProtection();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -52,15 +53,21 @@ export default function WarrantyModal() {
 
   const onFormSubmitHandler = async (e: FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
     if (data) {
-      await updateWarranty(data.id, formData);
-      setLoading(false);
+      await updateWarranty({
+        id: data.id,
+        data: formData,
+        fileData: {
+          prevURL: data.fileURL,
+          file: selectedFile
+        }
+      });
     } else {
-      await addWarranty(formData);
+      await addWarranty({
+        data: formData,
+        file: selectedFile
+      });
     }
-    setLoading(false);
   }
 
   return (
@@ -106,28 +113,35 @@ export default function WarrantyModal() {
             onChange={handleChange}
           />
         </div>
+        <FileUploader
+          accept='application/pdf'
+          allowedExtensions={['PDF']}
+          description={formData.fileURL}
+          selectedFile={selectedFile}
+          onFileSelect={(file) => setSelectedFile(file)}
+          onClear={() => {
+            setFormData(prev => ({ ...prev, fileURL: "" }));
+            setSelectedFile(null);
+          }}
+        />
       </div>
       <DialogFooter className='pt-4 border-t'>
+        <Button 
+          disabled={isLoading}
+          type='submit' 
+          className='cursor-pointer'
+        >
+          {isLoading && <Spinner className="w-4 h-4" />}
+          {isLoading ? "Збереження..." : "Зберегти"}
+        </Button>
         <Button
           type="button"
           variant="outline"
           onClick={() => dispatch(closeModal())}
-          disabled={loading}
+          disabled={isLoading}
           className='cursor-pointer'
         >
           Відміна
-        </Button>
-        <Button
-          type="submit"
-          disabled={loading}
-          className="cursor-pointer relative flex items-center justify-center"
-        >
-          <span className={loading ? "opacity-0" : "opacity-100"}>Зберегти</span>
-          {loading && (
-            <span className="absolute inset-0 flex items-center justify-center">
-              <Spinner />
-            </span>
-          )}
         </Button>
       </DialogFooter>
     </form>

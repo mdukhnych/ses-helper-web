@@ -8,11 +8,13 @@ export interface BaseServiceItem {
 export interface WarrantyDataItem extends BaseServiceItem {
   price: number;
   description: string;
+  fileURL: string;
 }
 
 export interface WarrantyService extends BaseServiceItem {
   type: 'warranty';
   data: WarrantyDataItem[];
+  fileURL: string;
 }
 
 export type Warranty = Omit<WarrantyDataItem, "id">;
