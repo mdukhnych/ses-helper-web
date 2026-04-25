@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react"; // Додали useState
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 import {
@@ -26,6 +26,11 @@ import { openModal } from "@/store/slices/modalSlice";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { fetchPhoneServicesData } from "@/store/slices/servicesSlice";
 import usePhoneServices from "@/hooks/usePhoneServices";
+import { toast } from "sonner"; 
+
+import PdfViewer from "@/components/shared/PdfViewer";
+import { PhoneServicesPdfTemplate } from "@/components/shared/PhoneServicesPdfTemplate";
+import { pdf } from "@react-pdf/renderer";
 
 function AdminActions({ data }: { data: PhoneServicesData }) {
   const dispatch = useAppDispatch();
@@ -67,6 +72,9 @@ export default function PhoneServices() {
   const data = rawData as PhoneServicesData | undefined;
   const role = useAppSelector(state => state.user.role);
 
+  const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
   useEffect(() => {
     dispatch(fetchPhoneServicesData());
   }, [dispatch]);
@@ -91,10 +99,53 @@ export default function PhoneServices() {
     return [...data.goodsAndServices].sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [data?.goodsAndServices]);
 
+
+  const handleGeneratePdf = async () => {
+    if (!data || data.goodsAndServices.length === 0) {
+      toast.error("Немає даних для генерації PDF");
+      return;
+    }
+
+    try {
+      setIsGenerating(true);
+      const blob = await pdf(
+        <PhoneServicesPdfTemplate data={data} />
+      ).toBlob();
+      
+      const url = URL.createObjectURL(blob);
+      setGeneratedPdfUrl(url);
+    } catch (error) {
+      console.error(error);
+      toast.error("Помилка при генерації PDF");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const closeGeneratedPdf = () => {
+    if (generatedPdfUrl) {
+      URL.revokeObjectURL(generatedPdfUrl); 
+      setGeneratedPdfUrl(null);
+    }
+  };
+
+
   if (!data) {
     return (
       <div className="flex w-full h-full items-center justify-center min-h-[400px]">
         <Spinner className="size-20" />
+      </div>
+    );
+  }
+
+  if (generatedPdfUrl) {
+    return (
+      <div className="h-[calc(100vh-100px)] w-full">
+        <PdfViewer 
+          url={generatedPdfUrl} 
+          title="Прайс: Товари та роботи" 
+          onBack={closeGeneratedPdf} 
+        />
       </div>
     );
   }
@@ -112,9 +163,20 @@ export default function PhoneServices() {
             className="sticky top-0 z-30 bg-sidebar-accent border-b font-medium text-base shadow-sm"
             style={{ display: 'grid', gridTemplateColumns: gridTemplate }}
           >
-            <div className="p-4 border-r sticky left-0 z-40 bg-sidebar-accent">
-              Перелік товарів та робіт
+            <div className="p-4 border-r sticky left-0 z-40 bg-sidebar-accent flex justify-between items-start gap-3">
+              <span className="leading-tight">Перелік товарів та робіт</span>
+              <Button 
+                onClick={handleGeneratePdf} 
+                disabled={isGenerating}
+                size="sm"
+                className="w-full sm:w-auto cursor-pointer"
+                variant={"outline"}
+              >
+                {isGenerating ? <Spinner className="mr-2 h-4 w-4" /> : null}
+                {isGenerating ? "Генерація..." : "Згенерувати PDF"}
+              </Button>
             </div>
+            
             {sortedServices.map(service => (
               <div key={service.id} className="p-4 border-r text-center flex items-center justify-center bg-sidebar-accent">
                 {role === "admin" ? (

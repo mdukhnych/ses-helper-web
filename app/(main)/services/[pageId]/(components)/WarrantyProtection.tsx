@@ -23,6 +23,7 @@ import useWarrantyProtection from '@/hooks/useWarrantyProtection';
 import { toast } from 'sonner';
 import PdfViewer from '@/components/shared/PdfViewer';
 import { WarrantyPdfTemplate } from '@/components/shared/WarrantyPdfTemplate';
+import { pdf } from '@react-pdf/renderer';
 
 export default function WarrantyProtection() {
   const dispatch = useAppDispatch();
@@ -39,8 +40,6 @@ export default function WarrantyProtection() {
 
     try {
       setIsGenerating(true);
-      const { pdf } = await import('@react-pdf/renderer');
-      
       const blob = await pdf(
         <WarrantyPdfTemplate 
           data={sortedData} 
@@ -154,6 +153,7 @@ export default function WarrantyProtection() {
                 className='cursor-pointer' 
                 onClick={handleGeneratePdf}
                 disabled={isGenerating}
+                variant={"outline"}
               >
                 {isGenerating ? <Spinner className="mr-2 h-4 w-4" /> : null}
                 {isGenerating ? 'Генерація...' : 'Згенерувати PDF'}
