@@ -199,11 +199,14 @@ export default function WarrantyProtection() {
                   <div className='p-4 pt-2' style={{whiteSpace: 'pre-wrap'}}>
                     { item.description }
                   </div>
-                  <div className='border-t mt-4 p-4 pb-0 flex gap-2 items-center justify-end'>
+                  {
+                    role === "admin" || item.fileURL.length > 0 ?
+                      <div className='border-t mt-4 p-4 pb-0 flex gap-2 items-center justify-end'>
                     <Button 
                       className='cursor-pointer'
                       type='button' 
                       disabled={item.fileURL.length <= 0}
+                      variant={"outline"}
                       onClick={() => item.fileURL ? setSelectedDoc({ url: item.fileURL, title: item.title }) : toast("Файл не знайдено!")}
                     >{"Пам'ятка"}</Button>
                     {
@@ -219,7 +222,8 @@ export default function WarrantyProtection() {
                         </>
                       : null
                     }
-                  </div>
+                  </div> : null
+                  }
                 </AccordionContent>
               </AccordionItem>
             </Card>
