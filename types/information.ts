@@ -22,7 +22,17 @@ export interface Motivations extends InformationBase {
   items: MotivationsItem[]
 }
 
+// Promos
+export interface PromoItem extends InformationBase {
+  description: string;
+  sku: string;
+}
+export interface Promos extends InformationBase {
+  items: PromoItem[];
+}
+
 export interface Information {
   instructions: Instructions;
   motivations: Motivations;
+  promos: Promos;
 }

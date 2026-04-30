@@ -1,6 +1,7 @@
 import React from 'react'
 import Instructions from './(components)/Instructions';
 import Motivations from './(components)/Motivations';
+import Promos from './(components)/Promos';
 
 export default async function MainPage({
   params,
@@ -11,6 +12,7 @@ export default async function MainPage({
 
   if (pageId === "instructions") return <Instructions />
   if (pageId === "motivations") return <Motivations />
+  if (pageId === "promos") return <Promos />
 
   return pageId
   

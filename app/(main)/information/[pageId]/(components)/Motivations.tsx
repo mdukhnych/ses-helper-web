@@ -77,16 +77,24 @@ export default function Instructions() {
       <div className="flex gap-4 flex-1 overflow-hidden">
         <ScrollArea className='relative border w-full rounded-lg overflow-hidden '>
 
-          <div className="grid grid-cols-[6fr_1fr] bg-sidebar-accent border-b font-semibold text-sm sticky top-0 z-20 w-full">
+          <div className="grid grid-cols-[6fr_1fr_1fr] bg-sidebar-accent border-b font-semibold text-sm sticky top-0 z-20 w-full">
             <div className="p-4 border-r">Найменування</div>
             <div className="p-4 border-r">Файл</div>
+            <div className="p-4 border-r">Результати</div>
           </div>
           <div className="flex flex-col">
             {filteredItems.length > 0 ? (
               filteredItems.map((item) => {
                 const rowContent = (
-                  <div className={"grid grid-cols-[6fr_1fr] hover:bg-muted/50 transition-colors select-none cursor-pointer"} onDoubleClick={() => item.url ? setSelectedDoc({ url: item.url, title: item.title }) : toast("Файл не знайдено!")}>
+                  <div className={"grid grid-cols-[6fr_1fr_1fr] hover:bg-muted/50 transition-colors select-none cursor-pointer"} onDoubleClick={() => item.url ? setSelectedDoc({ url: item.url, title: item.title }) : toast("Файл не знайдено!")}>
                     <div className="p-4 border-r flex items-center font-medium">{item.title}</div>
+                    <div className="p-4 border-r flex items-center justify-center">
+                      {item.url ? (
+                        <CircleCheckBig className="inline-block text-green-600" />
+                      ) : (
+                        <Minus className="inline-block text-muted-foreground" />
+                      )}
+                    </div>
                     <div className="p-4 border-r flex items-center justify-center">
                       {item.url ? (
                         <CircleCheckBig className="inline-block text-green-600" />

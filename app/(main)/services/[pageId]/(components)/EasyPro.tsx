@@ -27,7 +27,6 @@ import useEasyPro from '@/hooks/useEasyPro';
 
 export default function EasyPro() {
   const [search, setSearch] = useState("");
-  // const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   const dispatch = useAppDispatch();
@@ -50,7 +49,6 @@ export default function EasyPro() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
 
     const reader = new FileReader();
     reader.onload = (evt) => {

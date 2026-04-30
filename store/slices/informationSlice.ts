@@ -1,5 +1,5 @@
 import { FIREBASE_FIRESTORE } from "@/firebaseConfig";
-import { Information, InformationBase, Instructions, InstructionsItem, Motivations, MotivationsItem } from "@/types/information";
+import { Information, InformationBase, Instructions, InstructionsItem, Motivations, MotivationsItem, PromoItem, Promos } from "@/types/information";
 import { createAsyncThunk, createSlice, isFulfilled, isPending, isRejected, PayloadAction } from "@reduxjs/toolkit";
 import { collection, getDocs } from "firebase/firestore";
 
@@ -16,6 +16,7 @@ export const fetchInformation = createAsyncThunk(
     return {
       instructions: data.instructions as Instructions,
       motivations: data.motivations as Motivations,
+      promos: data.promos as Promos,
     };
   }
 );
@@ -44,29 +45,47 @@ export const fetchMotivations = createAsyncThunk(
       ...doc.data()
     } as MotivationsItem));
   }
+);
+
+export const fetchPromos = createAsyncThunk(
+  'information/fetchPromos',
+  async () => {
+    const ref = collection(FIREBASE_FIRESTORE, "information", "promos", "items");
+    const snapshot = getDocs(ref);
+
+    return (await snapshot).docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    } as PromoItem));
+  }
 )
 
 interface InformationStore {
   loading: boolean;
   error: string | null;
   data: Information;
-}``
+}
 
 const initialState: InformationStore = {
   loading: false,
   error: null,
   data: {
+    promos: {
+      id: "",
+      title: "",
+      items: [],
+    },
+    motivations: {
+      id: "",
+      title: "",
+      items: [],
+    },
     instructions: {
       id: "",
       title: "",
       categories: [],
       items: []
     },
-    motivations: {
-      id: "",
-      title: "",
-      items: [],
-    }
   }
 }
 
@@ -97,6 +116,12 @@ const informationSlice = createSlice({
         state.data.motivations.items = [];
       }
       state.data.motivations.items = action.payload;
+    },
+    updatePromosInStore: (state, action: PayloadAction<PromoItem[]>) => {
+      if (!state.data.promos.items) {
+        state.data.promos.items = [];
+      }
+      state.data.promos.items = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -110,15 +135,18 @@ const informationSlice = createSlice({
       .addCase(fetchMotivations.fulfilled,(state, action) => {
         state.data.motivations.items = action.payload;
       })
+      .addCase(fetchPromos.fulfilled,(state, action) => {
+        state.data.promos.items = action.payload;
+      })
       //Universal Matchers
-      .addMatcher(isPending(fetchInformation, fetchInstructions, fetchMotivations), (state) => {
+      .addMatcher(isPending(fetchInformation, fetchInstructions, fetchMotivations, fetchPromos), (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addMatcher(isFulfilled(fetchInformation, fetchInstructions, fetchMotivations), (state) => {
+      .addMatcher(isFulfilled(fetchInformation, fetchInstructions, fetchMotivations, fetchPromos), (state) => {
         state.loading = false;
       })
-      .addMatcher(isRejected(fetchInformation, fetchInstructions, fetchMotivations), (state, action) => {
+      .addMatcher(isRejected(fetchInformation, fetchInstructions, fetchMotivations, fetchPromos), (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Сталася невідома помилка";
       });
@@ -129,7 +157,8 @@ export const {
   addInstructionToStore,
   updateInstructionsInStore,
   updateInstructionsCategories,
-  updateMotivationsInStore
+  updateMotivationsInStore,
+  updatePromosInStore
 } = informationSlice.actions;
 
 export default informationSlice.reducer;

@@ -3,6 +3,7 @@ import EktaServiceModal from './components/EktaServiceModal'
 import InstructionsModal from './components/InstructionsModal'
 import MotivationsModal from './components/MotivationsModal'
 import PhoneServicesModal from './components/PhoneServicesModal'
+import PromosModal from './components/PromosModal'
 import WarrantyModal from './components/WarrantyModal'
 
 export const MODAL_CONFIG = {
@@ -25,6 +26,10 @@ export const MODAL_CONFIG = {
   'motivations': {
     title: 'Мотивації',
     Component: MotivationsModal,
+  },
+  'promos': {
+    title: 'Акції та промо',
+    Component: PromosModal,
   },
 } as const
 

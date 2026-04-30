@@ -6,11 +6,11 @@ import { toast } from "sonner";
 import ConfirmDialog from '../shared/ConfirmDialog';
 
 const allSupportedFormats = [
-  "application/pdf",                                      // PDF
-  "image/*",                                              // Зображення
-  ".doc, .docx, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document", // Word
-  ".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // Excel
-  ".csv, text/csv"                                        // CSV
+  "application/pdf",                                                      
+  "image/*",                                                          
+  ".doc, .docx, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+  ".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+  ".csv, text/csv"                                                 
 ].join(", ");
 
 interface FileUploaderProps {
@@ -25,30 +25,52 @@ interface FileUploaderProps {
 }
 
 const FileUploader: React.FC<FileUploaderProps> = ({
-  label = "Файл:", // Текст заголовка
-  description, // Назва файлу, що вже існує на сервері.
-  selectedFile, // Поточний об'єкт файлу, обраний користувачем.
-  onFileSelect, // Колбек при виборі файлу.
-  onClear, // Колбек для видалення файлу та очищення стану.
-  accept = allSupportedFormats, // Рядок MIME-типів/розширень для вікна вибору.
-  maxSizeMB = 10, // Максимально дозволений розмір файлу в мегабайтах.
-  allowedExtensions = ['PDF', 'IMG', 'DOC', 'DOCX', 'XLS', 'XLSX', 'CSV'] // Масив рядків для відображення підказки користувачу.
+  label = "Файл:",
+  description,
+  selectedFile,
+  onFileSelect,
+  onClear,
+  accept = allSupportedFormats,
+  maxSizeMB = 10,
+  allowedExtensions = ['PDF', 'IMG', 'DOC', 'DOCX', 'XLS', 'XLSX', 'CSV']
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processFile = (file: File | undefined | null) => {
+    if (!file) return false;
 
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
       toast.error(`Файл занадто великий! Ліміт: ${maxSizeMB} MB`);
-      e.target.value = "";
-      return;
+      return false;
     }
 
     onFileSelect(file);
+    return true;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    processFile(file);
     e.target.value = "";
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          const customName = `screenshot_${Date.now()}.${file.type.split('/')[1]}`;
+          const renamedFile = new File([file], customName, { type: file.type });
+          
+          processFile(renamedFile);
+        }
+        break; 
+      }
+    }
   };
 
   return (
@@ -58,13 +80,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           {label}
         </Label>
         
-        <div className="relative flex-1">
+        <div className="relative flex-1" onPaste={handlePaste}>
           <Input
             id="file-input"
             value={selectedFile ? selectedFile.name : (description || "")}
             readOnly
-            placeholder="Оберіть файл..."
+            placeholder={`Оберіть файл${allowedExtensions.includes('IMG') ? " або натисніть Ctrl+V для скріншоту..." : "..."}`}
             className={`cursor-default ${selectedFile ? "border-green-500 bg-green-50/10" : ""}`}
+            // onClick={() => fileInputRef.current?.click()} 
           />
         </div>
 
@@ -105,7 +128,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         />
       </div>
       
-      <div className="flex justify-center gap-4 px-1">
+      <div className="flex justify-center gap-4 px-1 mt-1">
         <span className="text-[10px] text-muted-foreground italic">
           Дозволено: {allowedExtensions.join(', ')}
         </span>
@@ -119,32 +142,3 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 };
 
 export default FileUploader;
-
-
-{/* <div className="flex items-center gap-1">
-          {!(selectedFile || description) ? (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="cursor-pointer rounded-md p-1 hover:bg-secondary transition-colors"
-              title="Завантажити"
-            >
-              <FileUp size={20} className="text-primary" />
-            </button>
-          ) : (
-            <ConfirmDialog
-              trigger={
-                <button
-                  type="button"
-                  className="cursor-pointer rounded-md p-1 text-destructive hover:bg-destructive/10 transition-colors"
-                  title="Видалити"
-                >
-                  <FileX size={20} />
-                </button>
-              }
-              title='Видалити файл?'
-              description='Це дію неможливо буде скасувати.'
-              onConfirm={onClear}
-            />
-          )}
-        </div> */}
