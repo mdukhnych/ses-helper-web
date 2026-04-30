@@ -7,13 +7,16 @@ import { FirebaseError } from "firebase/app";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export default function useAuth() {
+  const [isLoading, setIsLoading] = useState(false);
   const dispatch =useAppDispatch();
   const router = useRouter();
 
   const login = async (email: string, password: string) => {
+    setIsLoading(true);
     signInWithEmailAndPassword(FIREBASE_AUTH, email, password)
     .then((userCredential) => {
       return getDoc(doc(FIREBASE_FIRESTORE, "users", userCredential.user.uid));
@@ -44,7 +47,9 @@ export default function useAuth() {
           toast.error('Щось пішло не так!');
           break;
       }
-    });
+    }).finally (() => {
+      setIsLoading(false);
+    })
   }
 
   const logout = async () => {
@@ -65,5 +70,5 @@ export default function useAuth() {
     }
   }
 
-  return ({ login, logout })
+  return ({ isLoading, login, logout })
 }

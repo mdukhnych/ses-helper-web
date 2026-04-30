@@ -5,13 +5,14 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Eye, EyeOff } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
+import { Spinner } from '../ui/spinner';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordShowing, setIsPasswordShowing] = useState(false);
 
-  const { login } = useAuth();
+  const { login, isLoading } = useAuth();
 
   const onFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,16 +43,16 @@ export default function LoginForm() {
 
         <button
           type='button'
-          className='absolute top-[50%] right-[10px] translate-y-[-50%] cursor-pointer'
+          className='absolute top-[50%] right-2.5 translate-y-[-50%] cursor-pointer'
           onClick={() => setIsPasswordShowing(prev => !prev)}
           aria-label={isPasswordShowing ? 'Hide password' : 'Show password'}
         >
           {isPasswordShowing ? <EyeOff /> : <Eye />}
         </button>
       </div>
-
-      <Button type='submit' className='cursor-pointer'>
-        Вхід
+      <Button disabled={isLoading} type="submit">
+        {isLoading && <Spinner className="w-4 h-4" />}
+        {isLoading ? "Вхід..." : "Вхід"}
       </Button>
     </form>
   );

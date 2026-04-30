@@ -26,6 +26,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -187,10 +188,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Ви впевнені що хочете вийти з облікового запису?</AlertDialogTitle>
+                <AlertDialogDescription></AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="cursor-pointer">Ні</AlertDialogCancel>
                 <AlertDialogAction className="cursor-pointer" onClick={logout}>Так</AlertDialogAction>
+                <AlertDialogCancel className="cursor-pointer">Ні</AlertDialogCancel>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
