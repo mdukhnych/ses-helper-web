@@ -35,8 +35,8 @@ export default function MotivationsModal() {
         </div>
 
         <FileUploader
-          accept='application/pdf'
-          allowedExtensions={['PDF']}
+          accept='application/pdf, image/*'
+          allowedExtensions={['PDF', 'IMG']}
           description={localItem.url}
           selectedFile={selectedFile}
           onFileSelect={(file) => setSelectedFile(file)}

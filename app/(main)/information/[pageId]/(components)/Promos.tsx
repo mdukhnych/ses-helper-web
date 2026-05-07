@@ -27,19 +27,7 @@ import { pdf } from '@react-pdf/renderer';
 import { PromosPdfTemplate, PdfPromoItem, CellValue } from '@/components/shared/PromosPdfTemplate'; 
 import { Download } from 'lucide-react';
 import PdfViewer from '@/components/shared/PdfViewer';
-
-const getFileType = (url: string) => {
-  if (!url) return 'unknown';
-  const lowerUrl = url.toLowerCase();
-  const cleanUrl = lowerUrl.split('?')[0];
-  if (cleanUrl.endsWith('.xls') || cleanUrl.endsWith('.xlsx') || cleanUrl.endsWith('.csv')) {
-    return 'excel';
-  }
-  if (cleanUrl.endsWith('.png') || cleanUrl.endsWith('.jpg') || cleanUrl.endsWith('.jpeg') || cleanUrl.endsWith('.webp')) {
-    return 'image';
-  }
-  return 'unknown';
-};
+import { getFileType } from "@/utils"
 
 export default function Promos() {
   const store = useAppSelector(state => state.information.data.promos.items) as PromoItem[] | undefined;
@@ -56,8 +44,6 @@ export default function Promos() {
     dispatch(fetchPromos());
   }, [dispatch]);
 
-  // ДОДАНО: Логіка фільтрації
-  // Фільтруємо масив, перевіряючи чи є введений текст у заголовку АБО в описі
   const filteredStore = store?.filter(item => {
     const searchLower = searchValue.toLowerCase();
     const titleMatch = item.title?.toLowerCase().includes(searchLower);
@@ -66,7 +52,6 @@ export default function Promos() {
   }) || [];
 
   const handleGeneratePdf = async () => {
-    // ВИПРАВЛЕНО: Тепер генеруємо PDF тільки з відфільтрованих елементів
     if (!filteredStore || filteredStore.length === 0) return;
     
     setIsGeneratingPdf(true);
@@ -124,16 +109,16 @@ export default function Promos() {
 
   if (pdfPreviewUrl) {
     return (
-      <div className="h-[800px] w-full border rounded-md overflow-hidden shadow-sm">
-        <PdfViewer 
-          url={pdfPreviewUrl} 
-          title="Промо акції (Експорт)" 
-          onBack={() => {
-            URL.revokeObjectURL(pdfPreviewUrl);
-            setPdfPreviewUrl(null);
-          }} 
-        />
-      </div>
+      <div className="h-[calc(100vh-100px)] w-full border rounded-md overflow-hidden shadow-sm">
+      <PdfViewer 
+        url={pdfPreviewUrl} 
+        title="Промо акції (Експорт)" 
+        onBack={() => {
+          URL.revokeObjectURL(pdfPreviewUrl);
+          setPdfPreviewUrl(null);
+        }} 
+      />
+    </div>
     );
   }
 
@@ -149,7 +134,6 @@ export default function Promos() {
           <Button 
             variant={"outline"} 
             onClick={handleGeneratePdf}
-            // ВИПРАВЛЕНО: Кнопка блокується, якщо після пошуку немає результатів
             disabled={isGeneratingPdf || filteredStore.length === 0}
           >
             {isGeneratingPdf ? <Spinner className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
@@ -173,7 +157,6 @@ export default function Promos() {
       </div>
 
       <div className="mt-4">
-        {/* ВИПРАВЛЕНО: Використовуємо відфільтрований список замість загального store */}
         {filteredStore.length > 0 ? (
           <Accordion type="single" collapsible className='flex flex-col gap-2'>
             {filteredStore.map((item, i) => (
@@ -206,7 +189,6 @@ export default function Promos() {
           </Accordion>
         ) : (
           <div className="flex flex-col items-center justify-center p-10 text-muted-foreground">
-            {/* Додаємо повідомлення, якщо користувач щось шукає, але нічого не знайшов */}
             {searchValue ? (
               <>
                 <span className="text-lg font-medium">За запитом &quot;{searchValue}&quot; нічого не знайдено</span>

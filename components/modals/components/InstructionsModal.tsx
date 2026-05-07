@@ -13,7 +13,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { closeModal } from '@/store/slices/modalSlice';
 import { InformationBase, InstructionsItem } from '@/types/information';
 import { CircleCheck, CircleX, PencilIcon, TrashIcon } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 type InstructionsModalPayload =

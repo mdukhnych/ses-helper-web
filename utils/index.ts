@@ -53,3 +53,16 @@ export const handleError = (error: unknown, customMessage: string) => {
   const message = error instanceof Error ? error.message : "Невідома помилка";
   toast.error(`${customMessage}: ${message}`);
 };
+
+export const getFileType = (url: string) => {
+  if (!url) return 'unknown';
+  const lowerUrl = url.toLowerCase();
+  const cleanUrl = lowerUrl.split('?')[0];
+  if (cleanUrl.endsWith('.xls') || cleanUrl.endsWith('.xlsx') || cleanUrl.endsWith('.csv')) {
+    return 'excel';
+  }
+  if (cleanUrl.endsWith('.png') || cleanUrl.endsWith('.jpg') || cleanUrl.endsWith('.jpeg') || cleanUrl.endsWith('.webp')) {
+    return 'image';
+  }
+  return 'unknown';
+};
