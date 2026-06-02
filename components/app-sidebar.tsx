@@ -1,6 +1,8 @@
 'use client'
 
-import { GalleryVerticalEnd, LogOut, Minus, Plus } from "lucide-react";
+import { LogOut, Minus, Plus } from "lucide-react";
+import Image from "next/image";
+import icon from "@/app/icon.png";
 
 import {
   Collapsible,
@@ -64,8 +66,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center justify-between p-2">
             <div className="flex gap-2 items-center">
-              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <GalleryVerticalEnd className="size-4" />
+              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-12 items-center justify-center rounded-lg">
+                <Image src={icon} alt="SES-helper" className="size-12 rounded-lg" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
                 <span className="font-medium">SES-helper</span>
